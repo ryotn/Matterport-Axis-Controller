@@ -1,4 +1,12 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Panorama360</string>
-    <string name="baseUUID">0000%1$s-0000-1000-8000-00805F9B34FB</string>
+    <string name="baseUUID" tools:ignore="TypographyDashes">0000%1$s-0000-1000-8000-00805F9B34FB</string>
+    <string name="connect">Connect</string>
+    <string name="connecting">Connecting...</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="state_connected">Connected</string>
+    <string name="state_disconnected">Disconnected</string>
+    <string name="angle">Angle:%1$d</string>
+    <string name="test_sendAngle">test sendAngle 10</string>
+    <string name="reset_angle">Reset Angle</string>
 </resources>
