@@ -7,6 +7,8 @@ import android.os.Looper
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -18,10 +20,23 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mBtnConnect: Button
     private lateinit var mBtnTestBtn: Button
     private lateinit var mBtnResetAngle: Button
+    private val permissionResults = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result: Map<String, Boolean> ->
+        if (result.all { it.value }) {
+            Toast.makeText(this, "全部権限取れた", Toast.LENGTH_SHORT).show()
+
+            mBtnConnect.isEnabled = true
+        } else {
+            Toast.makeText(this, "全部権限取れなかった！", Toast.LENGTH_SHORT).show()
+        }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        permissionResults.launch(arrayOf(android.Manifest.permission.BLUETOOTH_CONNECT,
+            android.Manifest.permission.BLUETOOTH_SCAN,
+            android.Manifest.permission.CAMERA))
+        mCameraManager = CameraManager(context = this)
         mMatterportAxisManager = MatterportAxisManager(context = this)
 
         mTextState = findViewById(R.id.txtState)
@@ -41,6 +56,7 @@ class MainActivity : AppCompatActivity() {
             }
             mBtnConnect.isEnabled = false
         }
+        mBtnConnect.isEnabled = false
 
         mBtnTestBtn.setOnClickListener {
             mMatterportAxisManager.sendAngle(10u)
@@ -53,6 +69,7 @@ class MainActivity : AppCompatActivity() {
                 mBtnResetAngle.isEnabled = true
             }, 1000)
         }
+        mBtnResetAngle.isEnabled = false
 
         mMatterportAxisManager.mListener = mMatterportAxisManagerListener
     }
@@ -63,6 +80,7 @@ class MainActivity : AppCompatActivity() {
                 mBtnConnect.text = getString(R.string.disconnect)
                 mTextState.text = getString(R.string.state_connected)
                 mBtnConnect.isEnabled = true
+                mBtnResetAngle.isEnabled = true
             }
         }
 
@@ -71,6 +89,7 @@ class MainActivity : AppCompatActivity() {
                 mBtnConnect.text = getString(R.string.connect)
                 mTextState.text = getString(R.string.state_disconnected)
                 mBtnConnect.isEnabled = true
+                mBtnResetAngle.isEnabled = false
             }
         }
 

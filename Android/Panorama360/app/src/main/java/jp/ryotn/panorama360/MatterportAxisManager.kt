@@ -1,6 +1,5 @@
 package jp.ryotn.panorama360
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
@@ -8,24 +7,17 @@ import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
-import android.bluetooth.BluetoothGattService
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.ParcelUuid
 import android.util.Log
 import android.widget.Toast
-import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import java.util.UUID
 
 @SuppressLint("MissingPermission")
@@ -64,21 +56,6 @@ class MatterportAxisManager(context: Context) {
     }
 
     init {
-        //PermissionのArrayList
-        val requestPermissions = ArrayList<String>()
-        //パーミッション要求:BLUETOOTH_CONNECT
-        if (ContextCompat.checkSelfPermission(CONTEXT, android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions.add(android.Manifest.permission.BLUETOOTH_CONNECT)
-        }
-        //パーミッション要求:BLUETOOTH_SCAN
-        if (ContextCompat.checkSelfPermission(CONTEXT, android.Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions.add(android.Manifest.permission.BLUETOOTH_SCAN)
-        }
-        //必要なPermission要求を全て出す
-        if (requestPermissions.isNotEmpty()) {
-            ActivityCompat.requestPermissions(CONTEXT as AppCompatActivity, requestPermissions.toTypedArray(), REQUEST_MULTI_PERMISSIONS)
-        }
-
         mBtManager = CONTEXT.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         mBtAdapter = mBtManager.adapter
     }
