@@ -9,22 +9,26 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.view.PreviewView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
+    private lateinit var mCameraManager: CameraManager
     private lateinit var mMatterportAxisManager: MatterportAxisManager
     private lateinit var mTextState: TextView
     private lateinit var mTextAngle: TextView
     private lateinit var mBtnConnect: Button
     private lateinit var mBtnTestBtn: Button
     private lateinit var mBtnResetAngle: Button
+    private lateinit var mViewFinder: PreviewView
     private val permissionResults = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result: Map<String, Boolean> ->
         if (result.all { it.value }) {
             Toast.makeText(this, "全部権限取れた", Toast.LENGTH_SHORT).show()
 
             mBtnConnect.isEnabled = true
+            mCameraManager.startCamera(mViewFinder)
         } else {
             Toast.makeText(this, "全部権限取れなかった！", Toast.LENGTH_SHORT).show()
         }
@@ -44,8 +48,9 @@ class MainActivity : AppCompatActivity() {
         mTextAngle.text = getString(R.string.angle,0)
         mBtnTestBtn = findViewById(R.id.btnSetAngle)
         mBtnResetAngle = findViewById(R.id.btnReset)
-
         mBtnConnect = findViewById(R.id.btnConnect)
+        mViewFinder = findViewById(R.id.viewFinder)
+
         mBtnConnect.setOnClickListener {
             if (mMatterportAxisManager.isConnected()) {
                 mMatterportAxisManager.disconnect()
