@@ -6,6 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import android.view.WindowManager
 import android.widget.Button
+import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -23,6 +24,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mBtnTestBtn: Button
     private lateinit var mBtnResetAngle: Button
     private lateinit var mViewFinder: PreviewView
+    private lateinit var mTextFocusDistance: TextView
+    private lateinit var mSeekBarFocusDistance: SeekBar
     private val permissionResults = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result: Map<String, Boolean> ->
         if (result.all { it.value }) {
             Toast.makeText(this, "全部権限取れた", Toast.LENGTH_SHORT).show()
@@ -50,6 +53,8 @@ class MainActivity : AppCompatActivity() {
         mBtnResetAngle = findViewById(R.id.btnReset)
         mBtnConnect = findViewById(R.id.btnConnect)
         mViewFinder = findViewById(R.id.viewFinder)
+        mTextFocusDistance = findViewById(R.id.txtFocusDistance)
+        mSeekBarFocusDistance = findViewById(R.id.seekFocusDsitance)
 
         mBtnConnect.setOnClickListener {
             if (mMatterportAxisManager.isConnected()) {
@@ -75,6 +80,21 @@ class MainActivity : AppCompatActivity() {
             }, 1000)
         }
         mBtnResetAngle.isEnabled = false
+
+        mSeekBarFocusDistance.progress = (resources.getString(R.string.default_focus_distance).toFloat() * 10).toInt()
+        mSeekBarFocusDistance.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+                mTextFocusDistance.text = (progress / 10.0F).toString()
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar) {
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar) {
+                val focalDistance = seekBar.progress / 10.0F
+                mCameraManager.resetFocusDistance(focalDistance, mViewFinder)
+            }
+        })
 
         mMatterportAxisManager.mListener = mMatterportAxisManagerListener
     }
