@@ -123,6 +123,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         mMatterportAxisManager.mListener = mMatterportAxisManagerListener
+        mCameraManager.mListener = mCameraManagerListener
     }
 
     private fun getFilePath() {
@@ -188,6 +189,16 @@ class MainActivity : AppCompatActivity() {
                 val angle = mMatterportAxisManager.getAngle()
                 mTextAngle.text = getString(R.string.angle, angle)
             }
+        }
+    }
+
+    private val mCameraManagerListener = object : CameraManager.CameraManagerListener {
+        override fun takePhotoSuccess() {
+            Log.d(TAG, "takePhotoSuccess")
+        }
+
+        override fun takePhotoError() {
+            Log.d(TAG, "takePhotoError")
         }
 
     }

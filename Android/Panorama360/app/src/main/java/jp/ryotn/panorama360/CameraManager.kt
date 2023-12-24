@@ -37,6 +37,13 @@ class CameraManager(context: Context) {
     private var mDocumentFile: DocumentFile? = null
     private var mSaveDocumentFile: DocumentFile? = null
 
+    var mListener: CameraManagerListener? = null
+
+    interface CameraManagerListener {
+        fun takePhotoSuccess()
+        fun takePhotoError()
+    }
+
     fun startCamera(viewFinder: PreviewView) {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(CONTEXT)
 
@@ -103,10 +110,12 @@ class CameraManager(context: Context) {
                 it, ContextCompat.getMainExecutor(CONTEXT), object : ImageCapture.OnImageSavedCallback {
                     override fun onError(exc: ImageCaptureException) {
                         Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
+                        mListener?.takePhotoError()
                     }
 
                     override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                         val msg = "Photo capture succeeded: ${output.savedUri}"
+                        mListener?.takePhotoSuccess()
                         Log.d(TAG, msg)
                         mFileCount++
                     }
