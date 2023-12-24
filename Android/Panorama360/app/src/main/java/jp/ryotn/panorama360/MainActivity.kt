@@ -1,9 +1,13 @@
 package jp.ryotn.panorama360
 
+import android.app.Activity
+import android.content.Intent
+import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.SeekBar
@@ -11,11 +15,19 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.view.PreviewView
+import androidx.core.content.edit
+import androidx.core.net.toUri
+import androidx.documentfile.provider.DocumentFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import androidx.preference.PreferenceManager
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
+    private val TAG = "MainActivity"
+
+    private lateinit var defaultPreference: SharedPreferences
     private lateinit var mCameraManager: CameraManager
     private lateinit var mMatterportAxisManager: MatterportAxisManager
     private lateinit var mTextState: TextView
@@ -23,6 +35,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mBtnConnect: Button
     private lateinit var mBtnTestBtn: Button
     private lateinit var mBtnResetAngle: Button
+    private lateinit var mBtnTestCapture: Button
+    private lateinit var mBtnCreateDir: Button
     private lateinit var mViewFinder: PreviewView
     private lateinit var mTextFocusDistance: TextView
     private lateinit var mSeekBarFocusDistance: SeekBar
@@ -43,7 +57,9 @@ class MainActivity : AppCompatActivity() {
         permissionResults.launch(arrayOf(android.Manifest.permission.BLUETOOTH_CONNECT,
             android.Manifest.permission.BLUETOOTH_SCAN,
             android.Manifest.permission.CAMERA))
+        defaultPreference = PreferenceManager.getDefaultSharedPreferences(this)
         mCameraManager = CameraManager(context = this)
+        getFilePath()
         mMatterportAxisManager = MatterportAxisManager(context = this)
 
         mTextState = findViewById(R.id.txtState)
@@ -52,6 +68,8 @@ class MainActivity : AppCompatActivity() {
         mBtnTestBtn = findViewById(R.id.btnSetAngle)
         mBtnResetAngle = findViewById(R.id.btnReset)
         mBtnConnect = findViewById(R.id.btnConnect)
+        mBtnTestCapture = findViewById(R.id.btnTestCapture)
+        mBtnCreateDir = findViewById(R.id.btnCreateDir)
         mViewFinder = findViewById(R.id.viewFinder)
         mTextFocusDistance = findViewById(R.id.txtFocusDistance)
         mSeekBarFocusDistance = findViewById(R.id.seekFocusDsitance)
@@ -96,7 +114,54 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
+        mBtnTestCapture.setOnClickListener {
+            mCameraManager.takePhoto()
+        }
+
+        mBtnCreateDir.setOnClickListener {
+            mCameraManager.createDir()
+        }
+
         mMatterportAxisManager.mListener = mMatterportAxisManagerListener
+    }
+
+    private fun getFilePath() {
+        val uriStr = defaultPreference.getString("uri", null)
+        if (uriStr.isNullOrEmpty()) {
+            getFilePermission()
+        } else {
+            val dir = DocumentFile.fromTreeUri(this, uriStr.toUri())
+            dir?.let {
+                if (it.canWrite()) {
+                    Log.d(TAG, "保存先のPermission取得済み $uriStr")
+                    mCameraManager.setOutputDirectory(uriStr.toUri())
+                } else {
+                    getFilePermission()
+                }
+            }
+        }
+    }
+
+    private fun getFilePermission() {
+        val launcher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val uri = result.data?.data ?: return@registerForActivityResult
+                    Log.d(TAG, "get File Save Path $uri")
+                    contentResolver.takePersistableUriPermission(
+                        uri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    )
+
+                    defaultPreference.edit {
+                        putString("uri", uri.toString())
+                    }
+
+                    mCameraManager.setOutputDirectory(uri)
+                }
+            }
+
+        launcher.launch(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE))
     }
 
     private val mMatterportAxisManagerListener = object : MatterportAxisManager.MatterportAxisManagerListener {
