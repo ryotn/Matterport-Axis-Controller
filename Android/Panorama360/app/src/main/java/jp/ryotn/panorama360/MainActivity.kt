@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.KeyEvent
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.SeekBar
@@ -133,6 +134,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun startCapture() {
+        if (isShooting || !mMatterportAxisManager.isConnected()) return
         mSoundPlayer.playStartSound()
         mBtnStart.isEnabled = false
         Handler(Looper.getMainLooper()).postDelayed({
@@ -180,6 +182,18 @@ class MainActivity : AppCompatActivity() {
             }
 
         launcher.launch(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE))
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
+        event?.let {
+            Log.d(TAG, "keycode:${it.keyCode}")
+            if (it.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
+                it.keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+                startCapture()
+                return true
+            }
+        }
+        return super.dispatchKeyEvent(event)
     }
 
     @OptIn(DelicateCoroutinesApi::class)
