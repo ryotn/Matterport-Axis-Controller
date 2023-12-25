@@ -30,6 +30,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var defaultPreference: SharedPreferences
     private lateinit var mCameraManager: CameraManager
     private lateinit var mMatterportAxisManager: MatterportAxisManager
+    private lateinit var mSoundPlayer: SoundPlayer
     private lateinit var mTextState: TextView
     private lateinit var mTextAngle: TextView
     private lateinit var mBtnConnect: Button
@@ -65,6 +66,7 @@ class MainActivity : AppCompatActivity() {
         mCameraManager = CameraManager(context = this)
         getFilePath()
         mMatterportAxisManager = MatterportAxisManager(context = this)
+        mSoundPlayer = SoundPlayer(context = this)
 
         mTextState = findViewById(R.id.txtState)
         mTextAngle = findViewById(R.id.txtAngle)
@@ -91,13 +93,7 @@ class MainActivity : AppCompatActivity() {
         mBtnConnect.isEnabled = false
 
         mBtnStart.setOnClickListener {
-            it.isEnabled = false
-            Handler(Looper.getMainLooper()).postDelayed({
-                mCameraManager.takePhoto()
-            }, 500)
-            Handler(Looper.getMainLooper()).postDelayed({
-                isShooting = true
-            }, 1000)
+            startCapture()
         }
 
         mBtnResetAngle.setOnClickListener {
@@ -134,6 +130,17 @@ class MainActivity : AppCompatActivity() {
 
         mMatterportAxisManager.mListener = mMatterportAxisManagerListener
         mCameraManager.mListener = mCameraManagerListener
+    }
+
+    fun startCapture() {
+        mSoundPlayer.playStartSound()
+        mBtnStart.isEnabled = false
+        Handler(Looper.getMainLooper()).postDelayed({
+            mCameraManager.takePhoto()
+        }, 500)
+        Handler(Looper.getMainLooper()).postDelayed({
+            isShooting = true
+        }, 1000)
     }
 
     private fun getFilePath() {
@@ -203,6 +210,7 @@ class MainActivity : AppCompatActivity() {
                     if (angle == 0) {
                         isShooting = false
                         mBtnStart.isEnabled = true
+                        mSoundPlayer.playCompSound()
                     } else if (angle % mRotationAngle == 0) {
                         mCameraManager.takePhoto()
                     }
