@@ -44,6 +44,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mSeekBarFocusDistance: SeekBar
 
     private var isShooting: Boolean = false
+    private var mShotAngleSum: Int = 0
     private var mRotationAngle: Int = 30
 
     private val permissionResults = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result: Map<String, Boolean> ->
@@ -137,6 +138,7 @@ class MainActivity : AppCompatActivity() {
         if (isShooting || !mMatterportAxisManager.isConnected()) return
         mSoundPlayer.playStartSound()
         mBtnStart.isEnabled = false
+        mShotAngleSum = mRotationAngle
         Handler(Looper.getMainLooper()).postDelayed({
             mCameraManager.takePhoto()
         }, 500)
@@ -221,11 +223,12 @@ class MainActivity : AppCompatActivity() {
                 val angle = mMatterportAxisManager.getAngle()
                 mTextAngle.text = getString(R.string.angle, angle)
                 if (isShooting) {
-                    if (angle == 0) {
+                    if (mShotAngleSum >= 360 && angle == 0) {
                         isShooting = false
                         mBtnStart.isEnabled = true
                         mSoundPlayer.playCompSound()
-                    } else if (angle % mRotationAngle == 0) {
+                    } else if (angle == mShotAngleSum) {
+                        mShotAngleSum += mRotationAngle
                         mCameraManager.takePhoto()
                     }
                 }
