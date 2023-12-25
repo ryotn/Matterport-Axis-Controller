@@ -10,7 +10,7 @@
     <string name="start">Start</string>
     <string name="stop">Stop</string>
     <string name="reset_angle">Reset Angle</string>
-    <string name="default_focus_distance">0.8</string>
+    <string name="default_focus_distance">0.4</string>
     <string name="test_capture">Test Capture</string>
     <string name="create_dir">Create Dir</string>
 </resources>
