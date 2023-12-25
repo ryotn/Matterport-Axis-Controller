@@ -22,7 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import androidx.preference.PreferenceManager
-import java.io.File
+import kotlinx.coroutines.DelicateCoroutinesApi
 
 class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
@@ -33,13 +33,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mTextState: TextView
     private lateinit var mTextAngle: TextView
     private lateinit var mBtnConnect: Button
-    private lateinit var mBtnTestBtn: Button
+    private lateinit var mBtnStart: Button
     private lateinit var mBtnResetAngle: Button
     private lateinit var mBtnTestCapture: Button
     private lateinit var mBtnCreateDir: Button
     private lateinit var mViewFinder: PreviewView
     private lateinit var mTextFocusDistance: TextView
     private lateinit var mSeekBarFocusDistance: SeekBar
+
+    private var isShooting: Boolean = false
+    private var mRotationAngle: Int = 30
+
     private val permissionResults = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result: Map<String, Boolean> ->
         if (result.all { it.value }) {
             Toast.makeText(this, "全部権限取れた", Toast.LENGTH_SHORT).show()
@@ -65,7 +69,7 @@ class MainActivity : AppCompatActivity() {
         mTextState = findViewById(R.id.txtState)
         mTextAngle = findViewById(R.id.txtAngle)
         mTextAngle.text = getString(R.string.angle,0)
-        mBtnTestBtn = findViewById(R.id.btnSetAngle)
+        mBtnStart = findViewById(R.id.btnStart)
         mBtnResetAngle = findViewById(R.id.btnReset)
         mBtnConnect = findViewById(R.id.btnConnect)
         mBtnTestCapture = findViewById(R.id.btnTestCapture)
@@ -86,8 +90,14 @@ class MainActivity : AppCompatActivity() {
         }
         mBtnConnect.isEnabled = false
 
-        mBtnTestBtn.setOnClickListener {
-            mMatterportAxisManager.sendAngle(10u)
+        mBtnStart.setOnClickListener {
+            it.isEnabled = false
+            Handler(Looper.getMainLooper()).postDelayed({
+                mCameraManager.takePhoto()
+            }, 500)
+            Handler(Looper.getMainLooper()).postDelayed({
+                isShooting = true
+            }, 1000)
         }
 
         mBtnResetAngle.setOnClickListener {
@@ -165,6 +175,7 @@ class MainActivity : AppCompatActivity() {
         launcher.launch(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE))
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     private val mMatterportAxisManagerListener = object : MatterportAxisManager.MatterportAxisManagerListener {
         override fun connected() {
             GlobalScope.launch(Dispatchers.Main) {
@@ -188,6 +199,14 @@ class MainActivity : AppCompatActivity() {
             GlobalScope.launch(Dispatchers.Main) {
                 val angle = mMatterportAxisManager.getAngle()
                 mTextAngle.text = getString(R.string.angle, angle)
+                if (isShooting) {
+                    if (angle == 0) {
+                        isShooting = false
+                        mBtnStart.isEnabled = true
+                    } else if (angle % mRotationAngle == 0) {
+                        mCameraManager.takePhoto()
+                    }
+                }
             }
         }
     }
@@ -195,10 +214,13 @@ class MainActivity : AppCompatActivity() {
     private val mCameraManagerListener = object : CameraManager.CameraManagerListener {
         override fun takePhotoSuccess() {
             Log.d(TAG, "takePhotoSuccess")
+            mMatterportAxisManager.sendAngle(mRotationAngle.toUByte())
         }
 
         override fun takePhotoError() {
             Log.d(TAG, "takePhotoError")
+            isShooting = false
+            mBtnStart.isEnabled = true
         }
 
     }
