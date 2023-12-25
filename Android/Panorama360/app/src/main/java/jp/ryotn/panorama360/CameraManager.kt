@@ -76,6 +76,24 @@ class CameraManager(context: Context) {
     }
 
     @OptIn(ExperimentalCamera2Interop::class)
+    private fun getFocalLengthIn35mm(): Float {
+        mCameraProvider?.let { cameraProvider ->
+            val cameraInfo = CameraSelector.DEFAULT_BACK_CAMERA.filter(cameraProvider.availableCameraInfos).firstOrNull()?.let {
+                Camera2CameraInfo.from(it)
+            }
+            cameraInfo?.let {
+                val sensorWidth =
+                    cameraInfo.getCameraCharacteristic(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE)?.width
+                        ?: 0.0F
+                val focalLength =
+                    cameraInfo.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)
+                        ?.get(0) ?: 0.0F
+
+                return (36 * focalLength) / sensorWidth
+            }
+        }
+
+        return  0.0F
     }
 
     @OptIn(ExperimentalCamera2Interop::class)
@@ -92,6 +110,7 @@ class CameraManager(context: Context) {
     }
 
     fun takePhoto() {
+        if (mFileCount == 0) writeTextFileFocalLengthIn35mm()
         val imageCapture = imageCapture ?: return
         val saveDocumentFile = mSaveDocumentFile ?: return
         if (!saveDocumentFile.exists()) {
@@ -132,5 +151,14 @@ class CameraManager(context: Context) {
         val saveDirName = now.format(dateFormatter)
         mSaveDocumentFile = documentFile.createDirectory(saveDirName)
         mFileCount = 0
+    }
+
+    fun writeTextFileFocalLengthIn35mm() {
+        mSaveDocumentFile?.createFile("text/plain", "focalLengthIn35mm.txt")?.let {
+            val outputStream = CONTEXT.contentResolver.openOutputStream(it.uri)
+            outputStream?.write(getFocalLengthIn35mm().toString().toByteArray())
+            outputStream?.flush()
+            outputStream?.close()
+        }
     }
 }
