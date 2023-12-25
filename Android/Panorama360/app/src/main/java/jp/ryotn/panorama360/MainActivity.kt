@@ -118,7 +118,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onStopTrackingTouch(seekBar: SeekBar) {
                 val focalDistance = seekBar.progress / 10.0F
-                mCameraManager.resetFocusDistance(focalDistance, mViewFinder)
+                mCameraManager.setFocusDistance(focalDistance)
             }
         })
 

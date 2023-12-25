@@ -1,16 +1,18 @@
 package jp.ryotn.panorama360
 
 import android.content.Context
+import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
 import android.net.Uri
 import android.util.Log
 import androidx.annotation.OptIn
-import androidx.camera.camera2.interop.Camera2Interop
+import androidx.camera.camera2.interop.Camera2CameraControl
+import androidx.camera.camera2.interop.Camera2CameraInfo
+import androidx.camera.camera2.interop.CaptureRequestOptions
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
-import androidx.camera.core.ExtendableBuilder
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
@@ -27,7 +29,7 @@ class CameraManager(context: Context) {
 
     private val CONTEXT = context
 
-    private var cameraProvider: ProcessCameraProvider? = null
+    private var mCameraProvider: ProcessCameraProvider? = null
     private var preview: Preview? = null
     private var imageCapture: ImageCapture? = null
     private var camera: Camera? = null
@@ -45,13 +47,12 @@ class CameraManager(context: Context) {
     }
 
     fun startCamera(viewFinder: PreviewView) {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(CONTEXT)
+        val mCameraProviderFuture = ProcessCameraProvider.getInstance(CONTEXT)
 
-        cameraProviderFuture.addListener({
-            cameraProvider = cameraProviderFuture.get()
+        mCameraProviderFuture.addListener({
+            mCameraProvider = mCameraProviderFuture.get()
 
             val previewBuilder = Preview.Builder()
-            setFocusDistance(previewBuilder, focusDistance)
             preview = previewBuilder.build()
 
             imageCapture = ImageCapture.Builder()
@@ -62,10 +63,11 @@ class CameraManager(context: Context) {
             val cameraSelector = CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build()
 
             try {
-                cameraProvider?.unbindAll()
+                mCameraProvider?.unbindAll()
 
-                camera = cameraProvider?.bindToLifecycle(
+                camera = mCameraProvider?.bindToLifecycle(
                     CONTEXT as LifecycleOwner, cameraSelector, preview,imageCapture)
+                setFocusDistance(focusDistance)
                 preview?.setSurfaceProvider(viewFinder.surfaceProvider)
             } catch(exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
@@ -73,24 +75,20 @@ class CameraManager(context: Context) {
         }, ContextCompat.getMainExecutor(CONTEXT))
     }
 
-    fun stopCamera() {
-        cameraProvider?.unbindAll()
+    @OptIn(ExperimentalCamera2Interop::class)
     }
 
     @OptIn(ExperimentalCamera2Interop::class)
-    fun setFocusDistance(builder: ExtendableBuilder<*>?, distance: Float) {
-        val extender: Camera2Interop.Extender<*> = Camera2Interop.Extender(builder as ExtendableBuilder<*>)
-        extender.setCaptureRequestOption(
-            CaptureRequest.CONTROL_AF_MODE,
-            CameraMetadata.CONTROL_AF_MODE_OFF
-        )
-        extender.setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, distance)
-    }
-
-    fun resetFocusDistance(distance: Float, viewFinder: PreviewView) {
-        stopCamera()
+    fun setFocusDistance(distance: Float) {
         focusDistance = distance
-        startCamera(viewFinder)
+        camera?.cameraControl?.let {
+            val camera2CameraControl : Camera2CameraControl = Camera2CameraControl.from(it)
+            val captureRequestOptions = CaptureRequestOptions.Builder()
+                .setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF)
+                .setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, focusDistance)
+                .build()
+            camera2CameraControl.captureRequestOptions = captureRequestOptions
+        }
     }
 
     fun takePhoto() {
