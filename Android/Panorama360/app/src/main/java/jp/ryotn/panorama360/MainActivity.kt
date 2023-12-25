@@ -189,7 +189,7 @@ class MainActivity : AppCompatActivity() {
             Log.d(TAG, "keycode:${it.keyCode}")
             if (it.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
                 it.keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
-                startCapture()
+                if(it.action == KeyEvent.ACTION_UP)startCapture()
                 return true
             }
         }
