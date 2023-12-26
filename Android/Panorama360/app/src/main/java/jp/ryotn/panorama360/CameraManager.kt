@@ -31,6 +31,12 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 
+data class Exif(val tag: String, val value: String) {
+    override fun toString(): String {
+        return "Exif tag:$tag value:$value"
+    }
+}
+
 class CameraManager(context: Context) {
     private val TAG = "CameraManager"
 
@@ -139,8 +145,10 @@ class CameraManager(context: Context) {
                     override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                         val msg = "Photo capture succeeded: ${output.savedUri}"
                         val focalLengthIn35mm = getFocalLengthIn35mm()
-                        writeEXIFWithFileDescriptor(ExifInterface.TAG_FOCAL_LENGTH_IN_35MM_FILM, focalLengthIn35mm.toInt().toString(), createFile.uri)
-                        writeEXIFWithFileDescriptor(ExifInterface.TAG_USER_COMMENT, "focalLengthIn35mm:$focalLengthIn35mm", createFile.uri)
+                        val exifs = arrayOf(Exif(ExifInterface.TAG_FOCAL_LENGTH_IN_35MM_FILM, focalLengthIn35mm.toInt().toString()),
+                            Exif(ExifInterface.TAG_USER_COMMENT, "focalLengthIn35mm:$focalLengthIn35mm")
+                        )
+                        writeEXIFWithFileDescriptor(exifs, createFile.uri)
                         mListener?.takePhotoSuccess()
                         Log.d(TAG, msg)
                         mFileCount++
@@ -164,13 +172,16 @@ class CameraManager(context: Context) {
 
     //元コード
     //https://stackoverflow.com/questions/46442700/writing-exif-data-to-image-saved-with-documentfile-class
-    private fun writeEXIFWithFileDescriptor(tag: String, value: String, uri: Uri) {
+    private fun writeEXIFWithFileDescriptor(exifs: Array<Exif>, uri: Uri) {
+        if (exifs.isEmpty()) return
         var parcelFileDescriptor: ParcelFileDescriptor? = null
         try {
             parcelFileDescriptor = CONTEXT.contentResolver.openFileDescriptor(uri, "rw")
             parcelFileDescriptor?.fileDescriptor?.let {
                 val exifInterface = ExifInterface(it)
-                exifInterface.setAttribute(tag, value)
+                exifs.forEach { exif ->
+                    exifInterface.setAttribute(exif.tag, exif.value)
+                }
                 exifInterface.saveAttributes()
             }
         } catch (e: FileNotFoundException) {
