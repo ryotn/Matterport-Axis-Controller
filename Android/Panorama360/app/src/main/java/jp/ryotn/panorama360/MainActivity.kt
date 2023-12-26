@@ -65,6 +65,24 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "全部権限取れなかった！", Toast.LENGTH_SHORT).show()
         }
     }
+
+    private val mStartForResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val uri = result.data?.data ?: return@registerForActivityResult
+                Log.d(TAG, "get File Save Path $uri")
+                contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                )
+
+                defaultPreference.edit {
+                    putString("uri", uri.toString())
+                }
+
+                mCameraManager.setOutputDirectory(uri)
+            }
+        }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -188,25 +206,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getFilePermission() {
-        val launcher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    val uri = result.data?.data ?: return@registerForActivityResult
-                    Log.d(TAG, "get File Save Path $uri")
-                    contentResolver.takePersistableUriPermission(
-                        uri,
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                    )
-
-                    defaultPreference.edit {
-                        putString("uri", uri.toString())
-                    }
-
-                    mCameraManager.setOutputDirectory(uri)
-                }
-            }
-
-        launcher.launch(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE))
+        mStartForResult.launch(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE))
     }
 
     override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
