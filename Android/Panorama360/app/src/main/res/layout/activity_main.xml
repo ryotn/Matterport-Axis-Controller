@@ -58,15 +58,46 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
+    <RadioGroup
+        android:id="@+id/radioGroupLensSel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="24dp"
+        android:layout_weight="2"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txtAngle">
+
+        <RadioButton
+            android:id="@+id/radioWide"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:checked="true"
+            android:padding="15dp"
+            android:text="@string/wide" />
+
+        <RadioButton
+            android:id="@+id/radioUltra"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:enabled="false"
+            android:text="@string/ultra_wide" />
+    </RadioGroup>
+
     <Button
         android:id="@+id/btnConnect"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="24dp"
         android:text="@string/connect"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/txtAngle" />
+        app:layout_constraintTop_toBottomOf="@+id/radioGroupLensSel" />
 
     <TextView
         android:id="@+id/txtState"
@@ -120,4 +151,5 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btnReset" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

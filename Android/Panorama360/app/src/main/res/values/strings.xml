@@ -14,4 +14,6 @@
     <string name="test_capture">Test Capture</string>
     <string name="create_dir">Create Dir</string>
     <string name="focus_lock">Focus Lock</string>
+    <string name="wide">Wide</string>
+    <string name="ultra_wide">Ultra Wide</string>
 </resources>

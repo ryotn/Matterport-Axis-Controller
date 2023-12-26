@@ -6,17 +6,15 @@ import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
 import android.media.ExifInterface
 import android.net.Uri
-import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.util.Log
-import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.camera.camera2.interop.Camera2CameraControl
 import androidx.camera.camera2.interop.Camera2CameraInfo
 import androidx.camera.camera2.interop.CaptureRequestOptions
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.Camera
-import androidx.camera.core.CameraSelector
+import androidx.camera.core.CameraInfo
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
@@ -29,7 +27,6 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-
 
 data class Exif(val tag: String, val value: String) {
     override fun toString(): String {
@@ -52,30 +49,39 @@ class CameraManager(context: Context) {
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss")
     private var mDocumentFile: DocumentFile? = null
     private var mSaveDocumentFile: DocumentFile? = null
+    private var mSelectCameraInfo: CameraInfo? = null
 
     var mListener: CameraManagerListener? = null
 
     interface CameraManagerListener {
+
+        fun initFinish()
         fun takePhotoSuccess()
         fun takePhotoError()
     }
 
-    fun startCamera(viewFinder: PreviewView) {
-        val mCameraProviderFuture = ProcessCameraProvider.getInstance(CONTEXT)
+    init {
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(CONTEXT)
+        cameraProviderFuture.addListener({
+            mCameraProvider = cameraProviderFuture.get()
+            mCameraProvider?.let {
+                CameraInfoService.initService(it.availableCameraInfos, CONTEXT)
+            }
+            mListener?.initFinish()
+        }, ContextCompat.getMainExecutor(CONTEXT))
+    }
 
-        mCameraProviderFuture.addListener({
-            mCameraProvider = mCameraProviderFuture.get()
+    fun startCamera(viewFinder: PreviewView, cameraInfo: CameraInfo) {
+        mSelectCameraInfo = cameraInfo
+        val previewBuilder = Preview.Builder()
+        preview = previewBuilder.build()
 
-            val previewBuilder = Preview.Builder()
-            preview = previewBuilder.build()
+        imageCapture = ImageCapture.Builder()
+            .setFlashMode(ImageCapture.FLASH_MODE_OFF)
+            .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
+            .build()
 
-            imageCapture = ImageCapture.Builder()
-                .setFlashMode(ImageCapture.FLASH_MODE_OFF)
-                .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
-                .build()
-
-            val cameraSelector = CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build()
-
+        mSelectCameraInfo?.cameraSelector?.let {cameraSelector ->
             try {
                 mCameraProvider?.unbindAll()
 
@@ -89,12 +95,18 @@ class CameraManager(context: Context) {
             } catch(exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
             }
-        }, ContextCompat.getMainExecutor(CONTEXT))
+        }
+    }
+
+    fun stopCamera() {
+        mCameraProvider?.unbindAll()
     }
 
     private fun getCameraInfo(): Camera2CameraInfo? {
         mCameraProvider?.let { cameraProvider ->
-            return CameraSelector.DEFAULT_BACK_CAMERA.filter(cameraProvider.availableCameraInfos).firstOrNull()?.let {
+            return mSelectCameraInfo?.cameraSelector?.filter(cameraProvider.availableCameraInfos)
+                ?.firstOrNull()
+                ?.let {
                 Camera2CameraInfo.from(it)
             }
         }

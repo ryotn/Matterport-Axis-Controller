@@ -11,6 +11,9 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.WindowManager
 import android.widget.Button
+import android.widget.RadioButton
+import android.widget.RadioGroup
+import android.widget.RadioGroup.OnCheckedChangeListener
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
@@ -42,6 +45,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mViewFinder: PreviewView
     private lateinit var mTextFocusDistance: TextView
     private lateinit var mSeekBarFocusDistance: SeekBar
+    private lateinit var mRadioWideLens: RadioButton
+    private lateinit var mRadioUltraWideLens: RadioButton
+    private lateinit var mRadioGroupLensSel: RadioGroup
 
     private var isShooting: Boolean = false
     private var mShotAngleSum: Int = 0
@@ -52,7 +58,9 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "全部権限取れた", Toast.LENGTH_SHORT).show()
 
             mBtnConnect.isEnabled = true
-            mCameraManager.startCamera(mViewFinder)
+            mCameraManager = CameraManager(context = this)
+            mCameraManager.mListener = mCameraManagerListener
+            getFilePath()
         } else {
             Toast.makeText(this, "全部権限取れなかった！", Toast.LENGTH_SHORT).show()
         }
@@ -65,8 +73,6 @@ class MainActivity : AppCompatActivity() {
             android.Manifest.permission.BLUETOOTH_SCAN,
             android.Manifest.permission.CAMERA))
         defaultPreference = PreferenceManager.getDefaultSharedPreferences(this)
-        mCameraManager = CameraManager(context = this)
-        getFilePath()
         mMatterportAxisManager = MatterportAxisManager(context = this)
         mSoundPlayer = SoundPlayer(context = this)
 
@@ -81,6 +87,9 @@ class MainActivity : AppCompatActivity() {
         mViewFinder = findViewById(R.id.viewFinder)
         mTextFocusDistance = findViewById(R.id.txtFocusDistance)
         mSeekBarFocusDistance = findViewById(R.id.seekFocusDsitance)
+        mRadioWideLens = findViewById(R.id.radioWide)
+        mRadioUltraWideLens = findViewById(R.id.radioUltra)
+        mRadioGroupLensSel = findViewById(R.id.radioGroupLensSel)
 
         mBtnConnect.setOnClickListener {
             if (mMatterportAxisManager.isConnected()) {
@@ -130,8 +139,22 @@ class MainActivity : AppCompatActivity() {
             mCameraManager.createDir()
         }
 
+        mRadioGroupLensSel.setOnCheckedChangeListener(object : OnCheckedChangeListener {
+            override fun onCheckedChanged(group: RadioGroup?, checkedId: Int) {
+                mCameraManager.stopCamera()
+                if (mRadioWideLens.id == checkedId) {
+                    CameraInfoService.getWideRangeCameraInfo()?.cameraInfo?.let {
+                        mCameraManager.startCamera(mViewFinder, it)
+                    }
+                } else if (mRadioUltraWideLens.id == checkedId) {
+                    CameraInfoService.getSuperWideRangeCameraInfo()?.cameraInfo?.let {
+                        mCameraManager.startCamera(mViewFinder, it)
+                    }
+                }
+            }
+        })
+
         mMatterportAxisManager.mListener = mMatterportAxisManagerListener
-        mCameraManager.mListener = mCameraManagerListener
     }
 
     fun startCapture() {
@@ -237,6 +260,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val mCameraManagerListener = object : CameraManager.CameraManagerListener {
+        override fun initFinish() {
+            CameraInfoService.getWideRangeCameraInfo()
+                ?.let { mCameraManager.startCamera(mViewFinder, it.cameraInfo) }
+
+            CameraInfoService.getSuperWideRangeCameraInfo()?.cameraInfo?.let {
+                mRadioUltraWideLens.isEnabled = true
+            }
+        }
+
         override fun takePhotoSuccess() {
             Log.d(TAG, "takePhotoSuccess")
             mMatterportAxisManager.sendAngle(mRotationAngle.toUByte())
