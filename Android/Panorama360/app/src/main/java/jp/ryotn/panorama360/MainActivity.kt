@@ -161,10 +161,12 @@ class MainActivity : AppCompatActivity() {
             override fun onCheckedChanged(group: RadioGroup?, checkedId: Int) {
                 mCameraManager.stopCamera()
                 if (mRadioWideLens.id == checkedId) {
+                    mRotationAngle = 30
                     CameraInfoService.getWideRangeCameraInfo()?.cameraInfo?.let {
                         mCameraManager.startCamera(mViewFinder, it)
                     }
                 } else if (mRadioUltraWideLens.id == checkedId) {
+                    mRotationAngle = 60
                     CameraInfoService.getSuperWideRangeCameraInfo()?.cameraInfo?.let {
                         mCameraManager.startCamera(mViewFinder, it)
                     }
