@@ -37,6 +37,7 @@ data class Exif(val tag: String, val value: String) {
     }
 }
 
+@OptIn(ExperimentalCamera2Interop::class)
 class CameraManager(context: Context) {
     private val TAG = "CameraManager"
 
@@ -81,6 +82,9 @@ class CameraManager(context: Context) {
                 camera = mCameraProvider?.bindToLifecycle(
                     CONTEXT as LifecycleOwner, cameraSelector, preview,imageCapture)
                 setFocusDistance(focusDistance)
+                val fdc = getFocusDistanceCalibration()
+                val mfd = getMinimumFocusDistance()
+                Log.d(TAG, "FocusDistanceCalibration: $fdc MinimumFocusDistance: $mfd")
                 preview?.setSurfaceProvider(viewFinder.surfaceProvider)
             } catch(exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
@@ -88,28 +92,49 @@ class CameraManager(context: Context) {
         }, ContextCompat.getMainExecutor(CONTEXT))
     }
 
-    @OptIn(ExperimentalCamera2Interop::class)
-    private fun getFocalLengthIn35mm(): Float {
+    private fun getCameraInfo(): Camera2CameraInfo? {
         mCameraProvider?.let { cameraProvider ->
-            val cameraInfo = CameraSelector.DEFAULT_BACK_CAMERA.filter(cameraProvider.availableCameraInfos).firstOrNull()?.let {
+            return CameraSelector.DEFAULT_BACK_CAMERA.filter(cameraProvider.availableCameraInfos).firstOrNull()?.let {
                 Camera2CameraInfo.from(it)
-            }
-            cameraInfo?.let {
-                val sensorWidth =
-                    cameraInfo.getCameraCharacteristic(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE)?.width
-                        ?: 0.0F
-                val focalLength =
-                    cameraInfo.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)
-                        ?.get(0) ?: 0.0F
-
-                return (36 * focalLength) / sensorWidth
             }
         }
 
-        return  0.0F
+        return null
     }
 
-    @OptIn(ExperimentalCamera2Interop::class)
+    private fun getFocalLengthIn35mm(): Float {
+        val cameraInfo = getCameraInfo()
+        cameraInfo?.let {
+            val sensorWidth =
+                cameraInfo.getCameraCharacteristic(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE)?.width
+                    ?: 0.0F
+            val focalLength =
+                cameraInfo.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)
+                    ?.get(0) ?: 0.0F
+
+            return (36 * focalLength) / sensorWidth
+        }
+
+        return 0.0F
+    }
+
+    fun getFocusDistanceCalibration(): Int {
+        val cameraInfo = getCameraInfo()
+        cameraInfo?.let {
+            return cameraInfo.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_FOCUS_DISTANCE_CALIBRATION) ?:0
+        }
+        return 0
+    }
+
+    fun getMinimumFocusDistance(): Float {
+        val cameraInfo = getCameraInfo()
+        cameraInfo?.let {
+            return cameraInfo.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE) ?:0.0F
+        }
+        return 0.0F
+    }
+
+
     fun setFocusDistance(distance: Float) {
         focusDistance = distance
         camera?.cameraControl?.let {
