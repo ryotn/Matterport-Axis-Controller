@@ -4,8 +4,12 @@ import android.content.Context
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
+import android.media.ExifInterface
 import android.net.Uri
+import android.os.Build
+import android.os.ParcelFileDescriptor
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.camera.camera2.interop.Camera2CameraControl
 import androidx.camera.camera2.interop.Camera2CameraInfo
@@ -21,8 +25,11 @@ import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.LifecycleOwner
+import java.io.FileNotFoundException
+import java.io.IOException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+
 
 class CameraManager(context: Context) {
     private val TAG = "CameraManager"
@@ -110,7 +117,6 @@ class CameraManager(context: Context) {
     }
 
     fun takePhoto() {
-        if (mFileCount == 0) writeTextFileFocalLengthIn35mm()
         val imageCapture = imageCapture ?: return
         val saveDocumentFile = mSaveDocumentFile ?: return
         if (!saveDocumentFile.exists()) {
@@ -132,6 +138,9 @@ class CameraManager(context: Context) {
 
                     override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                         val msg = "Photo capture succeeded: ${output.savedUri}"
+                        val focalLengthIn35mm = getFocalLengthIn35mm()
+                        writeEXIFWithFileDescriptor(ExifInterface.TAG_FOCAL_LENGTH_IN_35MM_FILM, focalLengthIn35mm.toInt().toString(), createFile.uri)
+                        writeEXIFWithFileDescriptor(ExifInterface.TAG_USER_COMMENT, "focalLengthIn35mm:$focalLengthIn35mm", createFile.uri)
                         mListener?.takePhotoSuccess()
                         Log.d(TAG, msg)
                         mFileCount++
@@ -153,12 +162,30 @@ class CameraManager(context: Context) {
         mFileCount = 0
     }
 
-    fun writeTextFileFocalLengthIn35mm() {
-        mSaveDocumentFile?.createFile("text/plain", "focalLengthIn35mm.txt")?.let {
-            val outputStream = CONTEXT.contentResolver.openOutputStream(it.uri)
-            outputStream?.write(getFocalLengthIn35mm().toString().toByteArray())
-            outputStream?.flush()
-            outputStream?.close()
+    //元コード
+    //https://stackoverflow.com/questions/46442700/writing-exif-data-to-image-saved-with-documentfile-class
+    private fun writeEXIFWithFileDescriptor(tag: String, value: String, uri: Uri) {
+        var parcelFileDescriptor: ParcelFileDescriptor? = null
+        try {
+            parcelFileDescriptor = CONTEXT.contentResolver.openFileDescriptor(uri, "rw")
+            parcelFileDescriptor?.fileDescriptor?.let {
+                val exifInterface = ExifInterface(it)
+                exifInterface.setAttribute(tag, value)
+                exifInterface.saveAttributes()
+            }
+        } catch (e: FileNotFoundException) {
+            Log.e(TAG, "File Not Found " + e.message)
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Log.e(TAG, "IOEXception " + e.message)
+        } finally {
+            if (parcelFileDescriptor != null) {
+                try {
+                    parcelFileDescriptor.close()
+                } catch (ignored: IOException) {
+                    ignored.printStackTrace()
+                }
+            }
         }
     }
 }
