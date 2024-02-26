@@ -1,0 +1,19 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">Panorama360</string>
+    <string name="baseUUID" tools:ignore="TypographyDashes">0000%1$s-0000-1000-8000-00805F9B34FB</string>
+    <string name="connect">Connect</string>
+    <string name="connecting">Connecting...</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="state_connected">Connected</string>
+    <string name="state_disconnected">Disconnected</string>
+    <string name="angle">Angle:%1$d</string>
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
+    <string name="reset_angle">Reset Angle</string>
+    <string name="default_focus_distance">0.4</string>
+    <string name="test_capture">Test Capture</string>
+    <string name="create_dir">Create Dir</string>
+    <string name="focus_lock">Focus Lock</string>
+    <string name="wide">Wide</string>
+    <string name="ultra_wide">Ultra Wide</string>
+</resources>
