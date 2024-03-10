@@ -157,27 +157,25 @@ class MainActivity : AppCompatActivity() {
             mCameraManager.createDir()
         }
 
-        mRadioGroupLensSel.setOnCheckedChangeListener(object : OnCheckedChangeListener {
-            override fun onCheckedChanged(group: RadioGroup?, checkedId: Int) {
-                mCameraManager.stopCamera()
-                if (mRadioWideLens.id == checkedId) {
-                    mRotationAngle = 30
-                    CameraInfoService.getWideRangeCameraInfo()?.cameraInfo?.let {
-                        mCameraManager.startCamera(mViewFinder, it)
-                    }
-                } else if (mRadioUltraWideLens.id == checkedId) {
-                    mRotationAngle = 60
-                    CameraInfoService.getSuperWideRangeCameraInfo()?.cameraInfo?.let {
-                        mCameraManager.startCamera(mViewFinder, it)
-                    }
+        mRadioGroupLensSel.setOnCheckedChangeListener { _, checkedId ->
+            mCameraManager.stopCamera()
+            if (mRadioWideLens.id == checkedId) {
+                mRotationAngle = 30
+                CameraInfoService.getWideRangeCameraInfo()?.cameraInfo?.let {
+                    mCameraManager.startCamera(mViewFinder, it)
+                }
+            } else if (mRadioUltraWideLens.id == checkedId) {
+                mRotationAngle = 60
+                CameraInfoService.getSuperWideRangeCameraInfo()?.cameraInfo?.let {
+                    mCameraManager.startCamera(mViewFinder, it)
                 }
             }
-        })
+        }
 
         mMatterportAxisManager.mListener = mMatterportAxisManagerListener
     }
 
-    fun startCapture() {
+    private fun startCapture() {
         if (isShooting || !mMatterportAxisManager.isConnected()) return
         mSoundPlayer.playStartSound()
         mBtnStart.isEnabled = false

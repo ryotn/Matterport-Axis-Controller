@@ -130,7 +130,7 @@ class CameraManager(context: Context) {
         return 0.0F
     }
 
-    fun getFocusDistanceCalibration(): Int {
+    private fun getFocusDistanceCalibration(): Int {
         val cameraInfo = getCameraInfo()
         cameraInfo?.let {
             return cameraInfo.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_FOCUS_DISTANCE_CALIBRATION) ?:0
@@ -138,7 +138,7 @@ class CameraManager(context: Context) {
         return 0
     }
 
-    fun getMinimumFocusDistance(): Float {
+    private fun getMinimumFocusDistance(): Float {
         val cameraInfo = getCameraInfo()
         cameraInfo?.let {
             return cameraInfo.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE) ?:0.0F
