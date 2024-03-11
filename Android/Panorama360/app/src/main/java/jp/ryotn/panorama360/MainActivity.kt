@@ -17,6 +17,7 @@ import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.extensions.ExtensionMode
 import androidx.camera.view.PreviewView
 import androidx.core.content.edit
 import androidx.core.net.toUri
@@ -177,6 +178,19 @@ class MainActivity : AppCompatActivity() {
                     changeCamera(it)
                 }
             }
+        }
+
+        mRadioGroupModeSel.setOnCheckedChangeListener { _, checkedId ->
+            mCameraManager.stopCamera()
+            var mode: Int? = null
+            if (mRadioModeNormal.id == checkedId) {
+                mode = null
+            } else if (mRadioModeHDR.id == checkedId) {
+                mode = ExtensionMode.HDR
+            } else if (mRadioModeNight.id == checkedId) {
+                mode = ExtensionMode.NIGHT
+            }
+            mCameraManager.startCamera(mViewFinder ,null ,mode)
         }
 
         mMatterportAxisManager.mListener = mMatterportAxisManagerListener
