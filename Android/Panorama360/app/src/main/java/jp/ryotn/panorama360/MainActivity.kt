@@ -13,7 +13,6 @@ import android.view.WindowManager
 import android.widget.Button
 import android.widget.RadioButton
 import android.widget.RadioGroup
-import android.widget.RadioGroup.OnCheckedChangeListener
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
@@ -48,6 +47,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mRadioWideLens: RadioButton
     private lateinit var mRadioUltraWideLens: RadioButton
     private lateinit var mRadioGroupLensSel: RadioGroup
+    private lateinit var mRadioModeNormal: RadioButton
+    private lateinit var mRadioModeHDR: RadioButton
+    private lateinit var mRadioModeNight: RadioButton
+    private lateinit var mRadioGroupModeSel: RadioGroup
 
     private var isShooting: Boolean = false
     private var mShotAngleSum: Int = 0
@@ -108,6 +111,10 @@ class MainActivity : AppCompatActivity() {
         mRadioWideLens = findViewById(R.id.radioWide)
         mRadioUltraWideLens = findViewById(R.id.radioUltra)
         mRadioGroupLensSel = findViewById(R.id.radioGroupLensSel)
+        mRadioModeNormal = findViewById(R.id.radioNormal)
+        mRadioModeHDR = findViewById(R.id.radioHDR)
+        mRadioModeNight = findViewById(R.id.radioNight)
+        mRadioGroupModeSel = findViewById(R.id.radioGroupModeSel)
 
         mBtnConnect.setOnClickListener {
             if (mMatterportAxisManager.isConnected()) {
@@ -161,18 +168,25 @@ class MainActivity : AppCompatActivity() {
             mCameraManager.stopCamera()
             if (mRadioWideLens.id == checkedId) {
                 mRotationAngle = 30
-                CameraInfoService.getWideRangeCameraInfo()?.cameraInfo?.let {
-                    mCameraManager.startCamera(mViewFinder, it)
+                CameraInfoService.getWideRangeCameraInfo()?.let {
+                    changeCamera(it)
                 }
             } else if (mRadioUltraWideLens.id == checkedId) {
                 mRotationAngle = 60
-                CameraInfoService.getSuperWideRangeCameraInfo()?.cameraInfo?.let {
-                    mCameraManager.startCamera(mViewFinder, it)
+                CameraInfoService.getSuperWideRangeCameraInfo()?.let {
+                    changeCamera(it)
                 }
             }
         }
 
         mMatterportAxisManager.mListener = mMatterportAxisManagerListener
+    }
+
+    private fun changeCamera(extendedCameraInfo: CameraInfoService.ExtendedCameraInfo) {
+        mRadioGroupModeSel.check(mRadioModeNormal.id)
+        mCameraManager.startCamera(mViewFinder, extendedCameraInfo.cameraInfo)
+        mRadioModeHDR.isEnabled = extendedCameraInfo.isHDR
+        mRadioModeNight.isEnabled = extendedCameraInfo.isNightMode
     }
 
     private fun startCapture() {
@@ -261,8 +275,9 @@ class MainActivity : AppCompatActivity() {
 
     private val mCameraManagerListener = object : CameraManager.CameraManagerListener {
         override fun initFinish() {
-            CameraInfoService.getWideRangeCameraInfo()
-                ?.let { mCameraManager.startCamera(mViewFinder, it.cameraInfo) }
+            CameraInfoService.getWideRangeCameraInfo()?.let {
+                changeCamera(it)
+            }
 
             CameraInfoService.getSuperWideRangeCameraInfo()?.let {
                 mRadioUltraWideLens.isEnabled = true
