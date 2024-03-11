@@ -9,8 +9,10 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.KeyEvent
+import android.view.View
 import android.view.WindowManager
 import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.SeekBar
@@ -52,6 +54,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mRadioModeHDR: RadioButton
     private lateinit var mRadioModeNight: RadioButton
     private lateinit var mRadioGroupModeSel: RadioGroup
+    private lateinit var mProcessingView: FrameLayout
 
     private var isShooting: Boolean = false
     private var mShotAngleSum: Int = 0
@@ -94,6 +97,7 @@ class MainActivity : AppCompatActivity() {
         permissionResults.launch(arrayOf(android.Manifest.permission.BLUETOOTH_CONNECT,
             android.Manifest.permission.BLUETOOTH_SCAN,
             android.Manifest.permission.CAMERA))
+        mProcessingView = findViewById(R.id.processingView)
         defaultPreference = PreferenceManager.getDefaultSharedPreferences(this)
         mMatterportAxisManager = MatterportAxisManager(context = this)
         mSoundPlayer = SoundPlayer(context = this)
@@ -158,6 +162,7 @@ class MainActivity : AppCompatActivity() {
         })
 
         mBtnTestCapture.setOnClickListener {
+            mProcessingView.visibility = View.VISIBLE
             mCameraManager.takePhoto()
         }
 
@@ -301,12 +306,14 @@ class MainActivity : AppCompatActivity() {
         override fun takePhotoSuccess() {
             Log.d(TAG, "takePhotoSuccess")
             mMatterportAxisManager.sendAngle(mRotationAngle.toUByte())
+            mProcessingView.visibility = View.INVISIBLE
         }
 
         override fun takePhotoError() {
             Log.d(TAG, "takePhotoError")
             isShooting = false
             mBtnStart.isEnabled = true
+            mProcessingView.visibility = View.INVISIBLE
         }
 
     }
