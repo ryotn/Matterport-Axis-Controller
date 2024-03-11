@@ -264,7 +264,7 @@ class MainActivity : AppCompatActivity() {
             CameraInfoService.getWideRangeCameraInfo()
                 ?.let { mCameraManager.startCamera(mViewFinder, it.cameraInfo) }
 
-            CameraInfoService.getSuperWideRangeCameraInfo()?.cameraInfo?.let {
+            CameraInfoService.getSuperWideRangeCameraInfo()?.let {
                 mRadioUltraWideLens.isEnabled = true
             }
         }

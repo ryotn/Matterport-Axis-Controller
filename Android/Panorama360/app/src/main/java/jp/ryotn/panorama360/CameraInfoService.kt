@@ -4,6 +4,8 @@ package jp.ryotn.panorama360
 import android.annotation.SuppressLint
 import android.content.Context
 import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraExtensionCharacteristics
+import android.hardware.camera2.CameraManager
 import androidx.camera.camera2.internal.compat.CameraManagerCompat
 import androidx.camera.camera2.interop.Camera2CameraInfo
 import androidx.camera.core.CameraInfo
@@ -39,6 +41,9 @@ object CameraInfoService {
             // カメラID
             val cameraId = camera2Info.cameraId
 
+            val isHDR = isExtensionSupported(cameraManager, cameraId, CameraExtensionCharacteristics.EXTENSION_HDR)
+            val isNightMode = isExtensionSupported(cameraManager, cameraId, CameraExtensionCharacteristics.EXTENSION_NIGHT)
+
             // 背面レンズ
             val isBack =
                 characteristics.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_BACK
@@ -52,7 +57,7 @@ object CameraInfoService {
                 // フロントカメラ
                 sortedCameraInfoMap?.set(
                     KEY_FRONT,
-                    ExtendedCameraInfo(cameraId, focalLength, cameraInfo, characteristics)
+                    ExtendedCameraInfo(cameraId, focalLength, cameraInfo, characteristics, isHDR, isNightMode)
                 )
                 return@forEach
             }
@@ -61,7 +66,7 @@ object CameraInfoService {
 
             if (notAdded) {
                 extendedCameraInfoList.add(
-                    ExtendedCameraInfo(cameraId, focalLength, cameraInfo, characteristics)
+                    ExtendedCameraInfo(cameraId, focalLength, cameraInfo, characteristics, isHDR, isNightMode)
                 )
             }
         }
@@ -100,6 +105,8 @@ object CameraInfoService {
         val focalLength: Float,
         val cameraInfo: CameraInfo,
         val cameraCharacteristics: CameraCharacteristics,
+        val isHDR: Boolean,
+        val isNightMode: Boolean,
     )
 
     fun getTelephotoCameraInfo() = sortedCameraInfoMap?.let { it[KEY_TELEPHOTO] }
@@ -107,4 +114,12 @@ object CameraInfoService {
     fun getWideRangeCameraInfo() = sortedCameraInfoMap?.let { it[KEY_WIDE_RANGE] }
 
     fun getSuperWideRangeCameraInfo() = sortedCameraInfoMap?.let { it[KEY_SUPER_WIDE_RANGE] }
+
+    // 元コード
+    // https://zenn.dev/watabee/scraps/af68e771f8baf1
+    private fun isExtensionSupported(manager: CameraManager, id: String, extension: Int): Boolean {
+        return manager
+            .getCameraExtensionCharacteristics(id)
+            .supportedExtensions.contains(extension)
+    }
 }
