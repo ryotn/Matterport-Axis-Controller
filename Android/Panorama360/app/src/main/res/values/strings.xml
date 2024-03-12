@@ -1,8 +1,8 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="UnusedResources">
     <string name="app_name">Panorama360</string>
     <string name="baseUUID" tools:ignore="TypographyDashes">0000%1$s-0000-1000-8000-00805F9B34FB</string>
     <string name="connect">Connect</string>
-    <string name="connecting">Connecting...</string>
+    <string name="connecting" tools:ignore="TypographyEllipsis">Connecting...</string>
     <string name="disconnect">Disconnect</string>
     <string name="state_connected">Connected</string>
     <string name="state_disconnected">Disconnected</string>

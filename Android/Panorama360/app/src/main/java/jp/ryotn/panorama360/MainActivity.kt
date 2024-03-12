@@ -31,9 +31,11 @@ import androidx.preference.PreferenceManager
 import kotlinx.coroutines.DelicateCoroutinesApi
 
 class MainActivity : AppCompatActivity() {
-    private val TAG = "MainActivity"
+    companion object {
+        private const val TAG = "MainActivity"
+    }
 
-    private lateinit var defaultPreference: SharedPreferences
+    private lateinit var mDefaultPreference: SharedPreferences
     private lateinit var mCamera360Manager: Camera360Manager
     private lateinit var mMatterportAxisManager: MatterportAxisManager
     private lateinit var mSoundPlayer: SoundPlayer
@@ -83,7 +85,7 @@ class MainActivity : AppCompatActivity() {
                     Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 )
 
-                defaultPreference.edit {
+                mDefaultPreference.edit {
                     putString("uri", uri.toString())
                 }
 
@@ -98,7 +100,7 @@ class MainActivity : AppCompatActivity() {
             android.Manifest.permission.BLUETOOTH_SCAN,
             android.Manifest.permission.CAMERA))
         mProcessingView = findViewById(R.id.processingView)
-        defaultPreference = PreferenceManager.getDefaultSharedPreferences(this)
+        mDefaultPreference = PreferenceManager.getDefaultSharedPreferences(this)
         mMatterportAxisManager = MatterportAxisManager(context = this)
         mSoundPlayer = SoundPlayer(context = this)
 
@@ -112,7 +114,7 @@ class MainActivity : AppCompatActivity() {
         mBtnCreateDir = findViewById(R.id.btnCreateDir)
         mViewFinder = findViewById(R.id.viewFinder)
         mTextFocusDistance = findViewById(R.id.txtFocusDistance)
-        mSeekBarFocusDistance = findViewById(R.id.seekFocusDsitance)
+        mSeekBarFocusDistance = findViewById(R.id.seekFocusDistance)
         mRadioWideLens = findViewById(R.id.radioWide)
         mRadioUltraWideLens = findViewById(R.id.radioUltra)
         mRadioGroupLensSel = findViewById(R.id.radioGroupLensSel)
@@ -222,7 +224,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getFilePath() {
-        val uriStr = defaultPreference.getString("uri", null)
+        val uriStr = mDefaultPreference.getString("uri", null)
         if (uriStr.isNullOrEmpty()) {
             getFilePermission()
         } else {

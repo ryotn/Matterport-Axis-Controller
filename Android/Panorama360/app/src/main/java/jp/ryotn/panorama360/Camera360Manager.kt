@@ -39,17 +39,18 @@ data class Exif(val tag: String, val value: String) {
 
 @OptIn(ExperimentalCamera2Interop::class)
 class Camera360Manager(context: Context) {
-    private val TAG = "Camera360Manager"
+    companion object {
+        private const val TAG = "Camera360Manager"
+    }
 
-    private val CONTEXT = context
-
+    private val mContext = context
     private var mCameraProvider: ProcessCameraProvider? = null
-    private var preview: Preview? = null
-    private var imageCapture: ImageCapture? = null
-    private var camera: Camera? = null
-    private var focusDistance = CONTEXT.resources.getString(R.string.default_focus_distance).toFloat()
+    private var mPreview: Preview? = null
+    private var mImageCapture: ImageCapture? = null
+    private var mCamera: Camera? = null
+    private var mFocusDistance = mContext.resources.getString(R.string.default_focus_distance).toFloat()
     private var mFileCount = 0
-    private val dateFormatter = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss")
+    private val mDateFormatter = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss")
     private var mDocumentFile: DocumentFile? = null
     private var mSaveDocumentFile: DocumentFile? = null
     private var mSelectCameraInfo: CameraInfo? = null
@@ -65,18 +66,18 @@ class Camera360Manager(context: Context) {
     }
 
     init {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(CONTEXT)
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(mContext)
         cameraProviderFuture.addListener({
             mCameraProvider = cameraProviderFuture.get()
             mCameraProvider?.let {
-                CameraInfoService.initService(it.availableCameraInfos, CONTEXT)
-                val extensionsManagerFuture = ExtensionsManager.getInstanceAsync(CONTEXT, it)
+                CameraInfoService.initService(it.availableCameraInfos, mContext)
+                val extensionsManagerFuture = ExtensionsManager.getInstanceAsync(mContext, it)
                 extensionsManagerFuture.addListener({
                     mExtensionsManager = extensionsManagerFuture.get()
                     mListener?.initFinish()
-                }, ContextCompat.getMainExecutor(CONTEXT))
+                }, ContextCompat.getMainExecutor(mContext))
             }
-        }, ContextCompat.getMainExecutor(CONTEXT))
+        }, ContextCompat.getMainExecutor(mContext))
     }
 
     fun startCamera(viewFinder: PreviewView, cameraInfo: CameraInfo? = null, mode:Int? = null) {
@@ -84,9 +85,9 @@ class Camera360Manager(context: Context) {
             mSelectCameraInfo = it
         }
         val previewBuilder = Preview.Builder()
-        preview = previewBuilder.build()
+        mPreview = previewBuilder.build()
 
-        imageCapture = ImageCapture.Builder()
+        mImageCapture = ImageCapture.Builder()
             .setFlashMode(ImageCapture.FLASH_MODE_OFF)
             .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
             .build()
@@ -105,13 +106,13 @@ class Camera360Manager(context: Context) {
 
                 mCameraProvider?.unbindAll()
 
-                camera = mCameraProvider?.bindToLifecycle(
-                    CONTEXT as LifecycleOwner, selector, preview,imageCapture)
-                setFocusDistance(focusDistance)
+                mCamera = mCameraProvider?.bindToLifecycle(
+                    mContext as LifecycleOwner, selector, mPreview,mImageCapture)
+                setFocusDistance(mFocusDistance)
                 val fdc = getFocusDistanceCalibration()
                 val mfd = getMinimumFocusDistance()
                 Log.d(TAG, "FocusDistanceCalibration: $fdc MinimumFocusDistance: $mfd")
-                preview?.setSurfaceProvider(viewFinder.surfaceProvider)
+                mPreview?.setSurfaceProvider(viewFinder.surfaceProvider)
             } catch(exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
             }
@@ -168,19 +169,19 @@ class Camera360Manager(context: Context) {
 
 
     fun setFocusDistance(distance: Float) {
-        focusDistance = distance
-        camera?.cameraControl?.let {
+        mFocusDistance = distance
+        mCamera?.cameraControl?.let {
             val camera2CameraControl : Camera2CameraControl = Camera2CameraControl.from(it)
             val captureRequestOptions = CaptureRequestOptions.Builder()
                 .setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF)
-                .setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, focusDistance)
+                .setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, mFocusDistance)
                 .build()
             camera2CameraControl.captureRequestOptions = captureRequestOptions
         }
     }
 
     fun takePhoto() {
-        val imageCapture = imageCapture ?: return
+        val imageCapture = mImageCapture ?: return
         val saveDocumentFile = mSaveDocumentFile ?: return
         if (!saveDocumentFile.exists()) {
             createDir()
@@ -188,7 +189,7 @@ class Camera360Manager(context: Context) {
             return
         }
         val createFile = saveDocumentFile.createFile("image/jpeg", "$mFileCount.jpg")
-        val outputStream = createFile?.uri?.let { CONTEXT.contentResolver.openOutputStream(it) }
+        val outputStream = createFile?.uri?.let { mContext.contentResolver.openOutputStream(it) }
         val outputOptions = outputStream?.let { ImageCapture.OutputFileOptions.Builder(it).build() }
 
         outputOptions?.let {
@@ -215,14 +216,14 @@ class Camera360Manager(context: Context) {
     }
 
     fun setOutputDirectory(path: Uri) {
-        mDocumentFile = DocumentFile.fromTreeUri(CONTEXT, path)
+        mDocumentFile = DocumentFile.fromTreeUri(mContext, path)
         createDir()
     }
 
     fun createDir() {
         val documentFile = mDocumentFile ?: return
         val now = LocalDateTime.now()
-        val saveDirName = now.format(dateFormatter)
+        val saveDirName = now.format(mDateFormatter)
         mSaveDocumentFile = documentFile.createDirectory(saveDirName)
         mFileCount = 0
     }
@@ -233,7 +234,7 @@ class Camera360Manager(context: Context) {
         if (exifs.isEmpty()) return
         var parcelFileDescriptor: ParcelFileDescriptor? = null
         try {
-            parcelFileDescriptor = CONTEXT.contentResolver.openFileDescriptor(uri, "rw")
+            parcelFileDescriptor = mContext.contentResolver.openFileDescriptor(uri, "rw")
             parcelFileDescriptor?.fileDescriptor?.let {
                 val exifInterface = ExifInterface(it)
                 exifs.forEach { exif ->
@@ -245,7 +246,7 @@ class Camera360Manager(context: Context) {
             Log.e(TAG, "File Not Found " + e.message)
         } catch (e: IOException) {
             e.printStackTrace()
-            Log.e(TAG, "IOEXception " + e.message)
+            Log.e(TAG, "IOException " + e.message)
         } finally {
             if (parcelFileDescriptor != null) {
                 try {
