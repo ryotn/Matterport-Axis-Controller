@@ -23,13 +23,13 @@ object CameraInfoService {
     // 超広角
     private const val KEY_SUPER_WIDE_RANGE = "KEY_SUPER_WIDE_RANGE"
 
-    private var sortedCameraInfoMap: MutableMap<String, ExtendedCameraInfo>? = null
+    private var mSortedCameraInfoMap: MutableMap<String, ExtendedCameraInfo>? = null
 
     @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
     @SuppressLint("RestrictedApi")
     fun initService(cameraInfoList: List<CameraInfo>, context: Context) {
-        if (sortedCameraInfoMap != null) return
-        sortedCameraInfoMap = mutableMapOf()
+        if (mSortedCameraInfoMap != null) return
+        mSortedCameraInfoMap = mutableMapOf()
 
         // 焦点距離とそれに対するCameraInfoを取得する
         val extendedCameraInfoList = mutableListOf<ExtendedCameraInfo>()
@@ -55,7 +55,7 @@ object CameraInfoService {
 
             if (isBack.not()) {
                 // フロントカメラ
-                sortedCameraInfoMap?.set(
+                mSortedCameraInfoMap?.set(
                     KEY_FRONT,
                     ExtendedCameraInfo(cameraId, focalLength, cameraInfo, characteristics, isHDR, isNightMode)
                 )
@@ -77,7 +77,7 @@ object CameraInfoService {
 
         // 超広角格納
         if (wideRangeIndex - 1 >= 0) {
-            sortedCameraInfoMap?.set(
+            mSortedCameraInfoMap?.set(
                 KEY_SUPER_WIDE_RANGE,
                 sortedExtendedCameraInfoList[wideRangeIndex - 1]
             )
@@ -85,7 +85,7 @@ object CameraInfoService {
 
         // 広角格納
         if (wideRangeIndex >= 0) {
-            sortedCameraInfoMap?.set(
+            mSortedCameraInfoMap?.set(
                 KEY_WIDE_RANGE,
                 sortedExtendedCameraInfoList[wideRangeIndex]
             )
@@ -93,7 +93,7 @@ object CameraInfoService {
 
         // 望遠角格納
         if (wideRangeIndex + 1 <= sortedExtendedCameraInfoList.lastIndex) {
-            sortedCameraInfoMap?.set(
+            mSortedCameraInfoMap?.set(
                 KEY_TELEPHOTO,
                 sortedExtendedCameraInfoList[wideRangeIndex + 1]
             )
@@ -109,11 +109,11 @@ object CameraInfoService {
         val isNightMode: Boolean,
     )
 
-    fun getTelephotoCameraInfo() = sortedCameraInfoMap?.let { it[KEY_TELEPHOTO] }
+    //fun getTelephotoCameraInfo() = mSortedCameraInfoMap?.let { it[KEY_TELEPHOTO] }
 
-    fun getWideRangeCameraInfo() = sortedCameraInfoMap?.let { it[KEY_WIDE_RANGE] }
+    fun getWideRangeCameraInfo() = mSortedCameraInfoMap?.let { it[KEY_WIDE_RANGE] }
 
-    fun getSuperWideRangeCameraInfo() = sortedCameraInfoMap?.let { it[KEY_SUPER_WIDE_RANGE] }
+    fun getSuperWideRangeCameraInfo() = mSortedCameraInfoMap?.let { it[KEY_SUPER_WIDE_RANGE] }
 
     // 元コード
     // https://zenn.dev/watabee/scraps/af68e771f8baf1

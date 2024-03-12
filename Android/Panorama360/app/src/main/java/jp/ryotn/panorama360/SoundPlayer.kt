@@ -5,9 +5,7 @@ import android.media.AudioAttributes
 import android.media.SoundPool
 
 class SoundPlayer(context: Context) {
-    private val TAG = "SoundPlayer"
-
-    private val CONTEXT = context
+    private val mContext = context
 
     private var mSoundPool: SoundPool
     private var mStartSoundId = 0
@@ -23,8 +21,8 @@ class SoundPlayer(context: Context) {
             .setAudioAttributes(audioAttributes)
             .setMaxStreams(2)
             .build()
-        mStartSoundId = mSoundPool.load(CONTEXT, R.raw.start, 1)
-        mCompSoundId = mSoundPool.load(CONTEXT, R.raw.comp, 1)
+        mStartSoundId = mSoundPool.load(mContext, R.raw.start, 1)
+        mCompSoundId = mSoundPool.load(mContext, R.raw.comp, 1)
     }
 
     fun playStartSound() {
