@@ -89,6 +89,47 @@
             android:text="@string/ultra_wide" />
     </RadioGroup>
 
+    <RadioGroup
+        android:id="@+id/radioGroupModeSel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="8dp"
+        android:layout_weight="2"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/radioGroupLensSel">
+
+        <RadioButton
+            android:id="@+id/radioNormal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:checked="true"
+            android:padding="10dp"
+            android:text="@string/normal" />
+
+        <RadioButton
+            android:id="@+id/radioHDR"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:enabled="false"
+            android:padding="15dp"
+            android:text="@string/HDR" />
+
+        <RadioButton
+            android:id="@+id/radioNight"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"
+            android:enabled="false"
+            android:padding="15dp"
+            android:text="@string/night" />
+    </RadioGroup>
+
     <Button
         android:id="@+id/btnConnect"
         android:layout_width="wrap_content"
@@ -97,7 +138,7 @@
         android:text="@string/connect"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/radioGroupLensSel" />
+        app:layout_constraintTop_toBottomOf="@+id/radioGroupModeSel" />
 
     <TextView
         android:id="@+id/txtState"
@@ -134,7 +175,7 @@
 
     <Button
         android:id="@+id/btnReset"
-        android:layout_width="124dp"
+        android:layout_width="130dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
         android:text="@string/reset_angle"
@@ -151,5 +192,24 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btnReset" />
+
+    <FrameLayout
+        android:id="@+id/processingView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#60FFFFFF"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center" />
+    </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

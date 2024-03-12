@@ -4,7 +4,7 @@ import android.content.Context
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
-import android.media.ExifInterface
+import androidx.exifinterface.media.ExifInterface
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.util.Log
@@ -18,11 +18,14 @@ import androidx.camera.core.CameraInfo
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
+import androidx.camera.extensions.ExtensionsManager
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.LifecycleOwner
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asExecutor
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.time.LocalDateTime
@@ -50,6 +53,7 @@ class CameraManager(context: Context) {
     private var mDocumentFile: DocumentFile? = null
     private var mSaveDocumentFile: DocumentFile? = null
     private var mSelectCameraInfo: CameraInfo? = null
+    private var mExtensionsManager: ExtensionsManager? =null
 
     var mListener: CameraManagerListener? = null
 
@@ -66,13 +70,19 @@ class CameraManager(context: Context) {
             mCameraProvider = cameraProviderFuture.get()
             mCameraProvider?.let {
                 CameraInfoService.initService(it.availableCameraInfos, CONTEXT)
+                val extensionsManagerFuture = ExtensionsManager.getInstanceAsync(CONTEXT, it)
+                extensionsManagerFuture.addListener({
+                    mExtensionsManager = extensionsManagerFuture.get()
+                    mListener?.initFinish()
+                }, ContextCompat.getMainExecutor(CONTEXT))
             }
-            mListener?.initFinish()
         }, ContextCompat.getMainExecutor(CONTEXT))
     }
 
-    fun startCamera(viewFinder: PreviewView, cameraInfo: CameraInfo) {
-        mSelectCameraInfo = cameraInfo
+    fun startCamera(viewFinder: PreviewView, cameraInfo: CameraInfo? = null, mode:Int? = null) {
+        cameraInfo?.let {
+            mSelectCameraInfo = it
+        }
         val previewBuilder = Preview.Builder()
         preview = previewBuilder.build()
 
@@ -83,10 +93,20 @@ class CameraManager(context: Context) {
 
         mSelectCameraInfo?.cameraSelector?.let {cameraSelector ->
             try {
+                var selector = cameraSelector
+                mode?.let { mode ->
+                    mExtensionsManager?.let { extensionsManager ->
+                        selector = extensionsManager.getExtensionEnabledCameraSelector(
+                            cameraSelector,
+                            mode
+                        )
+                    }
+                }
+
                 mCameraProvider?.unbindAll()
 
                 camera = mCameraProvider?.bindToLifecycle(
-                    CONTEXT as LifecycleOwner, cameraSelector, preview,imageCapture)
+                    CONTEXT as LifecycleOwner, selector, preview,imageCapture)
                 setFocusDistance(focusDistance)
                 val fdc = getFocusDistanceCalibration()
                 val mfd = getMinimumFocusDistance()
@@ -130,7 +150,7 @@ class CameraManager(context: Context) {
         return 0.0F
     }
 
-    fun getFocusDistanceCalibration(): Int {
+    private fun getFocusDistanceCalibration(): Int {
         val cameraInfo = getCameraInfo()
         cameraInfo?.let {
             return cameraInfo.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_FOCUS_DISTANCE_CALIBRATION) ?:0
@@ -138,7 +158,7 @@ class CameraManager(context: Context) {
         return 0
     }
 
-    fun getMinimumFocusDistance(): Float {
+    private fun getMinimumFocusDistance(): Float {
         val cameraInfo = getCameraInfo()
         cameraInfo?.let {
             return cameraInfo.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE) ?:0.0F
@@ -173,7 +193,7 @@ class CameraManager(context: Context) {
 
         outputOptions?.let {
             imageCapture.takePicture(
-                it, ContextCompat.getMainExecutor(CONTEXT), object : ImageCapture.OnImageSavedCallback {
+                it, Dispatchers.Default.asExecutor(), object : ImageCapture.OnImageSavedCallback {
                     override fun onError(exc: ImageCaptureException) {
                         Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
                         mListener?.takePhotoError()

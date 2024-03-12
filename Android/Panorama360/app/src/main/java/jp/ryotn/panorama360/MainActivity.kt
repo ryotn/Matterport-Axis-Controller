@@ -9,15 +9,17 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.KeyEvent
+import android.view.View
 import android.view.WindowManager
 import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.RadioButton
 import android.widget.RadioGroup
-import android.widget.RadioGroup.OnCheckedChangeListener
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.extensions.ExtensionMode
 import androidx.camera.view.PreviewView
 import androidx.core.content.edit
 import androidx.core.net.toUri
@@ -48,6 +50,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mRadioWideLens: RadioButton
     private lateinit var mRadioUltraWideLens: RadioButton
     private lateinit var mRadioGroupLensSel: RadioGroup
+    private lateinit var mRadioModeNormal: RadioButton
+    private lateinit var mRadioModeHDR: RadioButton
+    private lateinit var mRadioModeNight: RadioButton
+    private lateinit var mRadioGroupModeSel: RadioGroup
+    private lateinit var mProcessingView: FrameLayout
 
     private var isShooting: Boolean = false
     private var mShotAngleSum: Int = 0
@@ -90,6 +97,7 @@ class MainActivity : AppCompatActivity() {
         permissionResults.launch(arrayOf(android.Manifest.permission.BLUETOOTH_CONNECT,
             android.Manifest.permission.BLUETOOTH_SCAN,
             android.Manifest.permission.CAMERA))
+        mProcessingView = findViewById(R.id.processingView)
         defaultPreference = PreferenceManager.getDefaultSharedPreferences(this)
         mMatterportAxisManager = MatterportAxisManager(context = this)
         mSoundPlayer = SoundPlayer(context = this)
@@ -108,6 +116,10 @@ class MainActivity : AppCompatActivity() {
         mRadioWideLens = findViewById(R.id.radioWide)
         mRadioUltraWideLens = findViewById(R.id.radioUltra)
         mRadioGroupLensSel = findViewById(R.id.radioGroupLensSel)
+        mRadioModeNormal = findViewById(R.id.radioNormal)
+        mRadioModeHDR = findViewById(R.id.radioHDR)
+        mRadioModeNight = findViewById(R.id.radioNight)
+        mRadioGroupModeSel = findViewById(R.id.radioGroupModeSel)
 
         mBtnConnect.setOnClickListener {
             if (mMatterportAxisManager.isConnected()) {
@@ -150,6 +162,7 @@ class MainActivity : AppCompatActivity() {
         })
 
         mBtnTestCapture.setOnClickListener {
+            mProcessingView.visibility = View.VISIBLE
             mCameraManager.takePhoto()
         }
 
@@ -157,27 +170,45 @@ class MainActivity : AppCompatActivity() {
             mCameraManager.createDir()
         }
 
-        mRadioGroupLensSel.setOnCheckedChangeListener(object : OnCheckedChangeListener {
-            override fun onCheckedChanged(group: RadioGroup?, checkedId: Int) {
-                mCameraManager.stopCamera()
-                if (mRadioWideLens.id == checkedId) {
-                    mRotationAngle = 30
-                    CameraInfoService.getWideRangeCameraInfo()?.cameraInfo?.let {
-                        mCameraManager.startCamera(mViewFinder, it)
-                    }
-                } else if (mRadioUltraWideLens.id == checkedId) {
-                    mRotationAngle = 60
-                    CameraInfoService.getSuperWideRangeCameraInfo()?.cameraInfo?.let {
-                        mCameraManager.startCamera(mViewFinder, it)
-                    }
+        mRadioGroupLensSel.setOnCheckedChangeListener { _, checkedId ->
+            mCameraManager.stopCamera()
+            if (mRadioWideLens.id == checkedId) {
+                mRotationAngle = 30
+                CameraInfoService.getWideRangeCameraInfo()?.let {
+                    changeCamera(it)
+                }
+            } else if (mRadioUltraWideLens.id == checkedId) {
+                mRotationAngle = 60
+                CameraInfoService.getSuperWideRangeCameraInfo()?.let {
+                    changeCamera(it)
                 }
             }
-        })
+        }
+
+        mRadioGroupModeSel.setOnCheckedChangeListener { _, checkedId ->
+            mCameraManager.stopCamera()
+            var mode: Int? = null
+            if (mRadioModeNormal.id == checkedId) {
+                mode = null
+            } else if (mRadioModeHDR.id == checkedId) {
+                mode = ExtensionMode.HDR
+            } else if (mRadioModeNight.id == checkedId) {
+                mode = ExtensionMode.NIGHT
+            }
+            mCameraManager.startCamera(mViewFinder ,null ,mode)
+        }
 
         mMatterportAxisManager.mListener = mMatterportAxisManagerListener
     }
 
-    fun startCapture() {
+    private fun changeCamera(extendedCameraInfo: CameraInfoService.ExtendedCameraInfo) {
+        mRadioGroupModeSel.check(mRadioModeNormal.id)
+        mCameraManager.startCamera(mViewFinder, extendedCameraInfo.cameraInfo)
+        mRadioModeHDR.isEnabled = extendedCameraInfo.isHDR
+        mRadioModeNight.isEnabled = extendedCameraInfo.isNightMode
+    }
+
+    private fun startCapture() {
         if (isShooting || !mMatterportAxisManager.isConnected()) return
         mSoundPlayer.playStartSound()
         mBtnStart.isEnabled = false
@@ -263,10 +294,11 @@ class MainActivity : AppCompatActivity() {
 
     private val mCameraManagerListener = object : CameraManager.CameraManagerListener {
         override fun initFinish() {
-            CameraInfoService.getWideRangeCameraInfo()
-                ?.let { mCameraManager.startCamera(mViewFinder, it.cameraInfo) }
+            CameraInfoService.getWideRangeCameraInfo()?.let {
+                changeCamera(it)
+            }
 
-            CameraInfoService.getSuperWideRangeCameraInfo()?.cameraInfo?.let {
+            CameraInfoService.getSuperWideRangeCameraInfo()?.let {
                 mRadioUltraWideLens.isEnabled = true
             }
         }
@@ -274,12 +306,14 @@ class MainActivity : AppCompatActivity() {
         override fun takePhotoSuccess() {
             Log.d(TAG, "takePhotoSuccess")
             mMatterportAxisManager.sendAngle(mRotationAngle.toUByte())
+            mProcessingView.visibility = View.INVISIBLE
         }
 
         override fun takePhotoError() {
             Log.d(TAG, "takePhotoError")
             isShooting = false
             mBtnStart.isEnabled = true
+            mProcessingView.visibility = View.INVISIBLE
         }
 
     }

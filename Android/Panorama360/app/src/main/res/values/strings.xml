@@ -16,4 +16,7 @@
     <string name="focus_lock">Focus Lock</string>
     <string name="wide">Wide</string>
     <string name="ultra_wide">Ultra Wide</string>
+    <string name="normal">Normal</string>
+    <string name="HDR">HDR</string>
+    <string name="night">Night</string>
 </resources>
