@@ -34,7 +34,7 @@ class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
 
     private lateinit var defaultPreference: SharedPreferences
-    private lateinit var mCameraManager: CameraManager
+    private lateinit var mCamera360Manager: Camera360Manager
     private lateinit var mMatterportAxisManager: MatterportAxisManager
     private lateinit var mSoundPlayer: SoundPlayer
     private lateinit var mTextState: TextView
@@ -65,8 +65,8 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "全部権限取れた", Toast.LENGTH_SHORT).show()
 
             mBtnConnect.isEnabled = true
-            mCameraManager = CameraManager(context = this)
-            mCameraManager.mListener = mCameraManagerListener
+            mCamera360Manager = Camera360Manager(context = this)
+            mCamera360Manager.mListener = mCamera360ManagerListener
             getFilePath()
         } else {
             Toast.makeText(this, "全部権限取れなかった！", Toast.LENGTH_SHORT).show()
@@ -87,7 +87,7 @@ class MainActivity : AppCompatActivity() {
                     putString("uri", uri.toString())
                 }
 
-                mCameraManager.setOutputDirectory(uri)
+                mCamera360Manager.setOutputDirectory(uri)
             }
         }
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -157,21 +157,21 @@ class MainActivity : AppCompatActivity() {
 
             override fun onStopTrackingTouch(seekBar: SeekBar) {
                 val focalDistance = seekBar.progress / 10.0F
-                mCameraManager.setFocusDistance(focalDistance)
+                mCamera360Manager.setFocusDistance(focalDistance)
             }
         })
 
         mBtnTestCapture.setOnClickListener {
             mProcessingView.visibility = View.VISIBLE
-            mCameraManager.takePhoto()
+            mCamera360Manager.takePhoto()
         }
 
         mBtnCreateDir.setOnClickListener {
-            mCameraManager.createDir()
+            mCamera360Manager.createDir()
         }
 
         mRadioGroupLensSel.setOnCheckedChangeListener { _, checkedId ->
-            mCameraManager.stopCamera()
+            mCamera360Manager.stopCamera()
             if (mRadioWideLens.id == checkedId) {
                 mRotationAngle = 30
                 CameraInfoService.getWideRangeCameraInfo()?.let {
@@ -186,7 +186,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         mRadioGroupModeSel.setOnCheckedChangeListener { _, checkedId ->
-            mCameraManager.stopCamera()
+            mCamera360Manager.stopCamera()
             var mode: Int? = null
             if (mRadioModeNormal.id == checkedId) {
                 mode = null
@@ -195,7 +195,7 @@ class MainActivity : AppCompatActivity() {
             } else if (mRadioModeNight.id == checkedId) {
                 mode = ExtensionMode.NIGHT
             }
-            mCameraManager.startCamera(mViewFinder ,null ,mode)
+            mCamera360Manager.startCamera(mViewFinder ,null ,mode)
         }
 
         mMatterportAxisManager.mListener = mMatterportAxisManagerListener
@@ -203,7 +203,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun changeCamera(extendedCameraInfo: CameraInfoService.ExtendedCameraInfo) {
         mRadioGroupModeSel.check(mRadioModeNormal.id)
-        mCameraManager.startCamera(mViewFinder, extendedCameraInfo.cameraInfo)
+        mCamera360Manager.startCamera(mViewFinder, extendedCameraInfo.cameraInfo)
         mRadioModeHDR.isEnabled = extendedCameraInfo.isHDR
         mRadioModeNight.isEnabled = extendedCameraInfo.isNightMode
     }
@@ -214,7 +214,7 @@ class MainActivity : AppCompatActivity() {
         mBtnStart.isEnabled = false
         mShotAngleSum = mRotationAngle
         Handler(Looper.getMainLooper()).postDelayed({
-            mCameraManager.takePhoto()
+            mCamera360Manager.takePhoto()
         }, 500)
         Handler(Looper.getMainLooper()).postDelayed({
             isShooting = true
@@ -230,7 +230,7 @@ class MainActivity : AppCompatActivity() {
             dir?.let {
                 if (it.canWrite()) {
                     Log.d(TAG, "保存先のPermission取得済み $uriStr")
-                    mCameraManager.setOutputDirectory(uriStr.toUri())
+                    mCamera360Manager.setOutputDirectory(uriStr.toUri())
                 } else {
                     getFilePermission()
                 }
@@ -285,14 +285,14 @@ class MainActivity : AppCompatActivity() {
                         mSoundPlayer.playCompSound()
                     } else if (angle == mShotAngleSum) {
                         mShotAngleSum += mRotationAngle
-                        mCameraManager.takePhoto()
+                        mCamera360Manager.takePhoto()
                     }
                 }
             }
         }
     }
 
-    private val mCameraManagerListener = object : CameraManager.CameraManagerListener {
+    private val mCamera360ManagerListener = object : Camera360Manager.Camera360ManagerListener {
         override fun initFinish() {
             CameraInfoService.getWideRangeCameraInfo()?.let {
                 changeCamera(it)

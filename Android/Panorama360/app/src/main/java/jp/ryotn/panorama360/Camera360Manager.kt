@@ -38,8 +38,8 @@ data class Exif(val tag: String, val value: String) {
 }
 
 @OptIn(ExperimentalCamera2Interop::class)
-class CameraManager(context: Context) {
-    private val TAG = "CameraManager"
+class Camera360Manager(context: Context) {
+    private val TAG = "Camera360Manager"
 
     private val CONTEXT = context
 
@@ -55,9 +55,9 @@ class CameraManager(context: Context) {
     private var mSelectCameraInfo: CameraInfo? = null
     private var mExtensionsManager: ExtensionsManager? =null
 
-    var mListener: CameraManagerListener? = null
+    var mListener: Camera360ManagerListener? = null
 
-    interface CameraManagerListener {
+    interface Camera360ManagerListener {
 
         fun initFinish()
         fun takePhotoSuccess()
