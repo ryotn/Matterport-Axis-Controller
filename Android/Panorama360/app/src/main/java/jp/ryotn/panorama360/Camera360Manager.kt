@@ -14,7 +14,7 @@ import androidx.camera.camera2.interop.Camera2CameraInfo
 import androidx.camera.camera2.interop.CaptureRequestOptions
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.Camera
-import androidx.camera.core.CameraInfo
+import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
@@ -53,7 +53,7 @@ class Camera360Manager(context: Context) {
     private val mDateFormatter = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss")
     private var mDocumentFile: DocumentFile? = null
     private var mSaveDocumentFile: DocumentFile? = null
-    private var mSelectCameraInfo: CameraInfo? = null
+    private var mSelectCameraSelector: CameraSelector? = null
     private var mExtensionsManager: ExtensionsManager? =null
 
     var mListener: Camera360ManagerListener? = null
@@ -80,10 +80,16 @@ class Camera360Manager(context: Context) {
         }, ContextCompat.getMainExecutor(mContext))
     }
 
-    fun startCamera(viewFinder: PreviewView, cameraInfo: CameraInfo? = null, mode:Int? = null) {
-        cameraInfo?.let {
-            mSelectCameraInfo = it
+    fun startCamera(viewFinder: PreviewView, cameraId: String? = null, mode:Int? = null) {
+        cameraId?.let { id ->
+            mSelectCameraSelector = CameraSelector.Builder().addCameraFilter {
+                val result = it.filter { cameraInfo ->
+                    id == Camera2CameraInfo.from(cameraInfo).cameraId
+                }
+                result
+            }.build()
         }
+
         val previewBuilder = Preview.Builder()
         mPreview = previewBuilder.build()
 
@@ -92,22 +98,23 @@ class Camera360Manager(context: Context) {
             .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
             .build()
 
-        mSelectCameraInfo?.cameraSelector?.let {cameraSelector ->
+        mSelectCameraSelector?.let {
+            var cameraSelector = it
             try {
-                var selector = cameraSelector
                 mode?.let { mode ->
                     mExtensionsManager?.let { extensionsManager ->
-                        selector = extensionsManager.getExtensionEnabledCameraSelector(
+                        cameraSelector = extensionsManager.getExtensionEnabledCameraSelector(
                             cameraSelector,
                             mode
                         )
+                        mSelectCameraSelector = cameraSelector
                     }
                 }
 
                 mCameraProvider?.unbindAll()
 
                 mCamera = mCameraProvider?.bindToLifecycle(
-                    mContext as LifecycleOwner, selector, mPreview,mImageCapture)
+                    mContext as LifecycleOwner, cameraSelector, mPreview,mImageCapture)
                 setFocusDistance(mFocusDistance)
                 val fdc = getFocusDistanceCalibration()
                 val mfd = getMinimumFocusDistance()
@@ -125,7 +132,7 @@ class Camera360Manager(context: Context) {
 
     private fun getCameraInfo(): Camera2CameraInfo? {
         mCameraProvider?.let { cameraProvider ->
-            return mSelectCameraInfo?.cameraSelector?.filter(cameraProvider.availableCameraInfos)
+            return mSelectCameraSelector?.filter(cameraProvider.availableCameraInfos)
                 ?.firstOrNull()
                 ?.let {
                 Camera2CameraInfo.from(it)

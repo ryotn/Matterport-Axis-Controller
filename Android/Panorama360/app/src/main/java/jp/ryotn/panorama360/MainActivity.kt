@@ -205,7 +205,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun changeCamera(extendedCameraInfo: CameraInfoService.ExtendedCameraInfo) {
         mRadioGroupModeSel.check(mRadioModeNormal.id)
-        mCamera360Manager.startCamera(mViewFinder, extendedCameraInfo.cameraInfo)
+        mCamera360Manager.startCamera(mViewFinder, extendedCameraInfo.cameraId)
         mRadioModeHDR.isEnabled = extendedCameraInfo.isHDR
         mRadioModeNight.isEnabled = extendedCameraInfo.isNightMode
     }
