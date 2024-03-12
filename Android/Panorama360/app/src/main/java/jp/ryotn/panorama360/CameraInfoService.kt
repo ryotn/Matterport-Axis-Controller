@@ -6,6 +6,7 @@ import android.content.Context
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraExtensionCharacteristics
 import android.hardware.camera2.CameraManager
+import android.util.Log
 import androidx.camera.core.CameraInfo
 
 object CameraInfoService {
@@ -38,36 +39,28 @@ object CameraInfoService {
             val characteristics =
                 cameraManager.getCameraCharacteristics(cameraId)
 
-            val ids = mutableListOf(cameraId)+ characteristics.physicalCameraIds
+            //フロントカメラはいらないのでreturn
+            val isFront = characteristics.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_FRONT
+            if (isFront) return@forEach
+
+            val isHDR = isExtensionSupported(cameraManager, cameraId, CameraExtensionCharacteristics.EXTENSION_HDR)
+            val isNightMode = isExtensionSupported(cameraManager, cameraId, CameraExtensionCharacteristics.EXTENSION_NIGHT)
+
+            val ids = characteristics.physicalCameraIds
 
             ids.forEach idLoop@ { id ->
                 val physicalCharacteristics = cameraManager.getCameraCharacteristics(id)
-                val isHDR = isExtensionSupported(cameraManager, id, CameraExtensionCharacteristics.EXTENSION_HDR)
-                val isNightMode = isExtensionSupported(cameraManager, id, CameraExtensionCharacteristics.EXTENSION_NIGHT)
-
-                // 背面レンズ
-                val isBack =
-                    physicalCharacteristics.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_BACK
 
                 // 焦点距離
                 val focalLength =
                     physicalCharacteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)
                         ?.getOrNull(0) ?: 0F
 
-                if (isBack.not()) {
-                    // フロントカメラ
-                    mSortedCameraInfoMap?.set(
-                        KEY_FRONT,
-                        ExtendedCameraInfo(id, focalLength, physicalCharacteristics, isHDR, isNightMode)
-                    )
-                    return@idLoop
-                }
-
                 val notAdded = extendedCameraInfoList.none { it.focalLength == focalLength }
 
                 if (notAdded) {
                     extendedCameraInfoList.add(
-                        ExtendedCameraInfo(id, focalLength, physicalCharacteristics, isHDR, isNightMode)
+                        ExtendedCameraInfo(cameraId, id, focalLength, physicalCharacteristics, isHDR, isNightMode)
                     )
                 }
             }
@@ -75,8 +68,9 @@ object CameraInfoService {
         }
 
         // 焦点距離を考慮して広角、超広角、望遠のCameraを確定
+        val camera0FocalLength = cameraManager.getCameraCharacteristics("0").get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)?.getOrNull(0) ?: 0F
         val sortedExtendedCameraInfoList = extendedCameraInfoList.sortedBy { it.focalLength }
-        val wideRangeIndex = sortedExtendedCameraInfoList.indexOfFirst { it.cameraId == "0" }
+        val wideRangeIndex = sortedExtendedCameraInfoList.indexOfFirst {it.focalLength == camera0FocalLength}//{ it.cameraId == "0" }
 
         // 超広角格納
         if (wideRangeIndex - 1 >= 0) {
@@ -105,6 +99,7 @@ object CameraInfoService {
 
     data class ExtendedCameraInfo(
         val cameraId: String,
+        val physicalCameraId: String,
         val focalLength: Float,
         val cameraCharacteristics: CameraCharacteristics,
         val isHDR: Boolean,

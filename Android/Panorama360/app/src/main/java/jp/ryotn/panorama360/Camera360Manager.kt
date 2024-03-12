@@ -1,13 +1,20 @@
 package jp.ryotn.panorama360
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraDevice
+import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
-import androidx.exifinterface.media.ExifInterface
+import android.hardware.camera2.params.OutputConfiguration
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.util.Log
+import android.view.Surface
+import android.view.TextureView
+import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.camera.camera2.interop.Camera2CameraControl
 import androidx.camera.camera2.interop.Camera2CameraInfo
@@ -20,16 +27,16 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.extensions.ExtensionsManager
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.documentfile.provider.DocumentFile
-import androidx.lifecycle.LifecycleOwner
+import androidx.exifinterface.media.ExifInterface
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+
 
 data class Exif(val tag: String, val value: String) {
     override fun toString(): String {
@@ -44,6 +51,13 @@ class Camera360Manager(context: Context) {
     }
 
     private val mContext = context
+    private val mCameraManager: CameraManager by lazy {
+        mContext.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+    }
+    private var mCameraDevice: CameraDevice? = null
+    private var mCaptureSession: CameraCaptureSession? = null
+    private var mPreviewRequestBuilder: CaptureRequest.Builder? = null
+
     private var mCameraProvider: ProcessCameraProvider? = null
     private var mPreview: Preview? = null
     private var mImageCapture: ImageCapture? = null
@@ -80,54 +94,63 @@ class Camera360Manager(context: Context) {
         }, ContextCompat.getMainExecutor(mContext))
     }
 
-    fun startCamera(viewFinder: PreviewView, cameraId: String? = null, mode:Int? = null) {
-        cameraId?.let { id ->
-            mSelectCameraSelector = CameraSelector.Builder().addCameraFilter {
-                val result = it.filter { cameraInfo ->
-                    id == Camera2CameraInfo.from(cameraInfo).cameraId
-                }
-                result
-            }.build()
-        }
-
-        val previewBuilder = Preview.Builder()
-        mPreview = previewBuilder.build()
-
-        mImageCapture = ImageCapture.Builder()
-            .setFlashMode(ImageCapture.FLASH_MODE_OFF)
-            .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
-            .build()
-
-        mSelectCameraSelector?.let {
-            var cameraSelector = it
-            try {
-                mode?.let { mode ->
-                    mExtensionsManager?.let { extensionsManager ->
-                        cameraSelector = extensionsManager.getExtensionEnabledCameraSelector(
-                            cameraSelector,
-                            mode
-                        )
-                        mSelectCameraSelector = cameraSelector
-                    }
+    @SuppressLint("MissingPermission")
+    fun startCamera(viewFinder: TextureView, cameraId: String, physicalCameraId: String, mode:Int? = null) {
+        cameraId.let { id ->
+            mCameraManager.openCamera(id, object: CameraDevice.StateCallback() {
+                override fun onOpened(camera: CameraDevice) {
+                    mCameraDevice = camera
+                    createCameraPreviewSession(viewFinder, physicalCameraId)
                 }
 
-                mCameraProvider?.unbindAll()
+                override fun onDisconnected(camera: CameraDevice) {
+                    mCameraDevice?.close()
+                    mCameraDevice = null
+                }
 
-                mCamera = mCameraProvider?.bindToLifecycle(
-                    mContext as LifecycleOwner, cameraSelector, mPreview,mImageCapture)
-                setFocusDistance(mFocusDistance)
-                val fdc = getFocusDistanceCalibration()
-                val mfd = getMinimumFocusDistance()
-                Log.d(TAG, "FocusDistanceCalibration: $fdc MinimumFocusDistance: $mfd")
-                mPreview?.setSurfaceProvider(viewFinder.surfaceProvider)
-            } catch(exc: Exception) {
-                Log.e(TAG, "Use case binding failed", exc)
-            }
+                override fun onError(camera: CameraDevice, p1: Int) {
+                    mCameraDevice?.close()
+                    mCameraDevice = null
+                }
+            }, null)
         }
     }
 
     fun stopCamera() {
-        mCameraProvider?.unbindAll()
+        mCaptureSession?.stopRepeating()
+        mCameraDevice?.close()
+        mCameraDevice = null
+    }
+
+    private fun createCameraPreviewSession(textureView: TextureView, physicalCameraId: String) {
+        if (mCameraDevice == null) {
+            return
+        }
+        mCameraDevice?.let { cameraDevice ->
+            val texture = textureView.surfaceTexture
+            texture?.setDefaultBufferSize(1024, 1024)
+            val surface = Surface(texture)
+
+            mPreviewRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+            mPreviewRequestBuilder?.addTarget(surface)
+
+            val configurations: MutableList<OutputConfiguration> = ArrayList()
+            val config = OutputConfiguration(surface)
+            config.setPhysicalCameraId(physicalCameraId)
+            configurations.add(config)
+
+            cameraDevice.createCaptureSessionByOutputConfigurations(configurations, object : CameraCaptureSession.StateCallback() {
+                override fun onConfigured(session: CameraCaptureSession) {
+                    mPreviewRequestBuilder?.let {
+                        mCaptureSession = session
+                        mCaptureSession?.setRepeatingRequest(it.build(), null, null)
+                        setFocusDistance(mFocusDistance)
+                    }
+                }
+
+                override fun onConfigureFailed(session: CameraCaptureSession) {}
+            }, null)
+        }
     }
 
     private fun getCameraInfo(): Camera2CameraInfo? {
@@ -174,16 +197,12 @@ class Camera360Manager(context: Context) {
         return 0.0F
     }
 
-
     fun setFocusDistance(distance: Float) {
         mFocusDistance = distance
-        mCamera?.cameraControl?.let {
-            val camera2CameraControl : Camera2CameraControl = Camera2CameraControl.from(it)
-            val captureRequestOptions = CaptureRequestOptions.Builder()
-                .setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF)
-                .setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, mFocusDistance)
-                .build()
-            camera2CameraControl.captureRequestOptions = captureRequestOptions
+        mPreviewRequestBuilder?.set(CaptureRequest.LENS_FOCUS_DISTANCE, mFocusDistance)
+        mPreviewRequestBuilder?.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF)
+        mPreviewRequestBuilder?.let {
+            mCaptureSession?.setRepeatingRequest(it.build(), null, null)
         }
     }
 
