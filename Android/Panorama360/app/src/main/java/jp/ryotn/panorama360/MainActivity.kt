@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.SurfaceTexture
+import android.hardware.camera2.CameraExtensionCharacteristics
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
@@ -21,8 +22,6 @@ import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.extensions.ExtensionMode
-import androidx.camera.view.PreviewView
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
@@ -64,6 +63,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mProcessingView: FrameLayout
 
     private var isPermission = false
+    private var mSelectedCameraInfo: CameraInfoService.ExtendedCameraInfo? = null
 
     private var isShooting: Boolean = false
     private var mShotAngleSum: Int = 0
@@ -191,16 +191,17 @@ class MainActivity : AppCompatActivity() {
         }
 
         mRadioGroupModeSel.setOnCheckedChangeListener { _, checkedId ->
-            mCamera360Manager?.stopCamera()
             var mode: Int? = null
             if (mRadioModeNormal.id == checkedId) {
                 mode = null
             } else if (mRadioModeHDR.id == checkedId) {
-                mode = ExtensionMode.HDR
+                mode = CameraExtensionCharacteristics.EXTENSION_HDR
             } else if (mRadioModeNight.id == checkedId) {
-                mode = ExtensionMode.NIGHT
+                mode = CameraExtensionCharacteristics.EXTENSION_NIGHT
             }
-            //mCamera360Manager?.startCamera(mViewFinder ,null ,null ,mode)
+            mSelectedCameraInfo?.let {
+                changeCamera(it, mode)
+            }
         }
 
         mMatterportAxisManager.mListener = mMatterportAxisManagerListener
@@ -257,8 +258,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun changeCamera(extendedCameraInfo: CameraInfoService.ExtendedCameraInfo, mode: Int? = null) {
+        mSelectedCameraInfo = extendedCameraInfo
         mCamera360Manager?.stopCamera()
-        mRadioGroupModeSel.check(mRadioModeNormal.id)
+        if (mode == null) mRadioGroupModeSel.check(mRadioModeNormal.id)
         mCamera360Manager?.startCamera(mViewFinder ,extendedCameraInfo.cameraId ,extendedCameraInfo.physicalCameraId, mode)
         mRadioModeHDR.isEnabled = extendedCameraInfo.isHDR
         mRadioModeNight.isEnabled = extendedCameraInfo.isNightMode

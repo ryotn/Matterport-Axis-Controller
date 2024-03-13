@@ -2,23 +2,23 @@ package jp.ryotn.panorama360
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.ImageFormat
+import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
+import android.hardware.camera2.CameraExtensionSession
 import android.hardware.camera2.CameraManager
-import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
+import android.hardware.camera2.params.ExtensionSessionConfiguration
 import android.hardware.camera2.params.OutputConfiguration
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.util.Log
+import android.util.Size
 import android.view.Surface
 import android.view.TextureView
-import android.widget.Toast
 import androidx.annotation.OptIn
-import androidx.camera.camera2.interop.Camera2CameraControl
-import androidx.camera.camera2.interop.Camera2CameraInfo
-import androidx.camera.camera2.interop.CaptureRequestOptions
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
@@ -58,6 +58,7 @@ class Camera360Manager(context: Context) {
     private var mCaptureSession: CameraCaptureSession? = null
     private var mPreviewRequestBuilder: CaptureRequest.Builder? = null
     private var mPhysicalCameraId: String? = null
+    private var mSurface: Surface? = null
 
     private var mCameraProvider: ProcessCameraProvider? = null
     private var mPreview: Preview? = null
@@ -97,13 +98,13 @@ class Camera360Manager(context: Context) {
     }
 
     @SuppressLint("MissingPermission")
-    fun startCamera(viewFinder: TextureView, cameraId: String, physicalCameraId: String, mode:Int? = null) {
+    fun startCamera(viewFinder: TextureView, cameraId: String, physicalCameraId: String?, mode:Int? = null) {
         cameraId.let { id ->
             mCameraManager.openCamera(id, object: CameraDevice.StateCallback() {
                 override fun onOpened(camera: CameraDevice) {
                     isStart = true
                     mCameraDevice = camera
-                    createCameraPreviewSession(viewFinder, physicalCameraId)
+                    createCameraPreviewSession(viewFinder, physicalCameraId, mode)
                 }
 
                 override fun onDisconnected(camera: CameraDevice) {
@@ -129,68 +130,143 @@ class Camera360Manager(context: Context) {
         mCameraDevice = null
     }
 
-    private fun createCameraPreviewSession(textureView: TextureView, physicalCameraId: String) {
+    private fun getExtensionSupportSizes(id: String, extension: Int): List<Size> {
+        return mCameraManager
+            .getCameraExtensionCharacteristics(id)
+            .getExtensionSupportedSizes(extension, ImageFormat.YUV_420_888)
+    }
+
+    private fun getSupportSizes(id: String): Array<Size>? {
+        return mCameraManager
+            .getCameraCharacteristics(id)
+            .get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+            ?.getOutputSizes(ImageFormat.YUV_420_888)
+    }
+
+    private fun createCameraPreviewSession(textureView: TextureView, physicalCameraId: String?, mode: Int?) {
         if (mCameraDevice == null) {
             return
         }
         mCameraDevice?.let { cameraDevice ->
+            var size = Size(1024, 1024)
+            getSupportSizes(cameraDevice.id)?.let {
+                size = it[0]
+            }
+            mode?.let {
+                val extensionsSizes = getExtensionSupportSizes(cameraDevice.id, it)
+                size = extensionsSizes[0]
+            }
             val texture = textureView.surfaceTexture
-            texture?.setDefaultBufferSize(1024, 1024)
-            val surface = Surface(texture)
-
-            mPreviewRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-            mPreviewRequestBuilder?.addTarget(surface)
+            texture?.setDefaultBufferSize(size.width, size.height)
+            mSurface = Surface(texture)
 
             mPhysicalCameraId = physicalCameraId
 
             val configurations: MutableList<OutputConfiguration> = ArrayList()
-            val config = OutputConfiguration(surface)
-            config.setPhysicalCameraId(mPhysicalCameraId)
+            val config = OutputConfiguration(mSurface!!)
+            if (mPhysicalCameraId != null) config.setPhysicalCameraId(mPhysicalCameraId)
             configurations.add(config)
 
-            cameraDevice.createCaptureSessionByOutputConfigurations(configurations, object : CameraCaptureSession.StateCallback() {
-                override fun onConfigured(session: CameraCaptureSession) {
-                    mPreviewRequestBuilder?.let {
-                        mCaptureSession = session
-                        mCaptureSession?.setRepeatingRequest(it.build(), null, null)
-                        setFocusDistance(mFocusDistance)
-                    }
+            if (mode != null) {
+
+                val extensionConfiguration = ExtensionSessionConfiguration(
+                    mode,
+                    configurations,
+                    Dispatchers.IO.asExecutor(),
+                    extensionSessionStateCallback
+                )
+                cameraDevice.createExtensionSession(extensionConfiguration)
+            } else {
+
+                mPreviewRequestBuilder =
+                    cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+                mPreviewRequestBuilder?.addTarget(mSurface!!)
+
+                cameraDevice.createCaptureSessionByOutputConfigurations(
+                    configurations,
+                    object : CameraCaptureSession.StateCallback() {
+                        override fun onConfigured(session: CameraCaptureSession) {
+                            mPreviewRequestBuilder?.let {
+                                mCaptureSession = session
+                                mCaptureSession?.setRepeatingRequest(it.build(), null, null)
+                                setFocusDistance(mFocusDistance)
+                            }
+                        }
+
+                        override fun onConfigureFailed(session: CameraCaptureSession) {}
+                    },
+                    null
+                )
+            }
+        }
+    }
+
+    private val extensionSessionStateCallback = object : CameraExtensionSession.StateCallback() {
+        override fun onConfigured(session: CameraExtensionSession) {
+            try {
+                mCameraDevice?.let { cameraDevice ->
+                    val captureRequest =
+                        cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
+                            addTarget(mSurface!!)
+                        }.build()
+                    session.setRepeatingRequest(
+                        captureRequest,
+                        Dispatchers.IO.asExecutor(),
+                        captureCallbacks
+                    )
                 }
 
-                override fun onConfigureFailed(session: CameraCaptureSession) {}
-            }, null)
+            } catch (e: CameraAccessException) {
+                Log.d(TAG, "Failed to preview capture request $e")
+            }
         }
+
+        override fun onClosed(session: CameraExtensionSession) {
+            super.onClosed(session)
+            mCameraDevice?.close()
+        }
+
+        override fun onConfigureFailed(session: CameraExtensionSession) {
+            mCameraDevice?.close()
+        }
+    }
+
+    private val captureCallbacks = object : CameraExtensionSession.ExtensionCaptureCallback() {
+        // Implement Capture Callbacks
     }
 
     private fun getCameraCharacteristic(cameraId: String): CameraCharacteristics {
         return mCameraManager.getCameraCharacteristics(cameraId)
     }
 
-    private fun getFocalLengthIn35mm(): Float {
-        mPhysicalCameraId?.let { id ->
-            val cameraCharacteristics = getCameraCharacteristic(id)
-            val sensorWidth = cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE)?.width ?: 0.0F
-            val focalLength = cameraCharacteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)?.get(0) ?: 0.0F
-
-            return (36 * focalLength) / sensorWidth
+    private fun getCurrentCameraId(): String {
+        mPhysicalCameraId?.let {
+            return it
         }
-        return 0.0F
+
+        mCameraDevice?.let {
+            return it.id
+        }
+
+        return ""
+    }
+
+    private fun getFocalLengthIn35mm(): Float {
+        val cameraCharacteristics = getCameraCharacteristic(getCurrentCameraId())
+        val sensorWidth = cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE)?.width ?: 0.0F
+        val focalLength = cameraCharacteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)?.get(0) ?: 0.0F
+
+        return (36 * focalLength) / sensorWidth
     }
 
     private fun getFocusDistanceCalibration(): Int {
-        mPhysicalCameraId?.let { id ->
-            val cameraCharacteristics = getCameraCharacteristic(id)
-            return cameraCharacteristics.get(CameraCharacteristics.LENS_INFO_FOCUS_DISTANCE_CALIBRATION) ?:0
-        }
-        return 0
+        val cameraCharacteristics = getCameraCharacteristic(getCurrentCameraId())
+        return cameraCharacteristics.get(CameraCharacteristics.LENS_INFO_FOCUS_DISTANCE_CALIBRATION) ?:0
     }
 
     private fun getMinimumFocusDistance(): Float {
-        mPhysicalCameraId?.let { id ->
-            val cameraCharacteristics = getCameraCharacteristic(id)
-            return cameraCharacteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE) ?:0.0F
-        }
-        return 0.0F
+        val cameraCharacteristics = getCameraCharacteristic(getCurrentCameraId())
+        return cameraCharacteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE) ?:0.0F
     }
 
     fun setFocusDistance(distance: Float) {

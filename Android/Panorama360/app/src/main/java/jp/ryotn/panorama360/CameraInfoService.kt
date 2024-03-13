@@ -48,7 +48,25 @@ object CameraInfoService {
 
             val ids = characteristics.physicalCameraIds
 
+            // physicalCameraIdsが空の端末もある場合はcameraIdのみ使う
+            if (ids.isEmpty()) {
+                val focalLength =
+                    characteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)
+                        ?.getOrNull(0) ?: 0F
+
+                val notAdded = extendedCameraInfoList.none { it.focalLength == focalLength }
+
+                if (notAdded) {
+                    extendedCameraInfoList.add(
+                        ExtendedCameraInfo(cameraId, null, focalLength, characteristics, isHDR, isNightMode)
+                    )
+                }
+            }
+
             ids.forEach idLoop@ { id ->
+                // physicalCameraIdsがほかのcameraIdと被っている端末がある
+                // その場合はスキップする
+                if (cameraIds.contains(id)) return@idLoop
                 val physicalCharacteristics = cameraManager.getCameraCharacteristics(id)
 
                 // 焦点距離
@@ -95,11 +113,13 @@ object CameraInfoService {
                 sortedExtendedCameraInfoList[wideRangeIndex + 1]
             )
         }
+
+        Log.d("CameraInfo","mSortedCameraInfoMap $mSortedCameraInfoMap")
     }
 
     data class ExtendedCameraInfo(
         val cameraId: String,
-        val physicalCameraId: String,
+        val physicalCameraId: String?,
         val focalLength: Float,
         val cameraCharacteristics: CameraCharacteristics,
         val isHDR: Boolean,
