@@ -63,6 +63,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mRadioGroupModeSel: RadioGroup
     private lateinit var mProcessingView: FrameLayout
 
+    private var isPermission = false
+
     private var isShooting: Boolean = false
     private var mShotAngleSum: Int = 0
     private var mRotationAngle: Int = 30
@@ -72,6 +74,7 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "全部権限取れた", Toast.LENGTH_SHORT).show()
 
             mBtnConnect.isEnabled = true
+            isPermission = true
             initCamera360Manager()
             getFilePath()
         } else {
@@ -211,12 +214,18 @@ class MainActivity : AppCompatActivity() {
             mCamera360Manager = Camera360Manager(context = this)
             mCamera360Manager?.mListener = mCamera360ManagerListener
         }
+
+        if (mViewFinder.isActivated && isPermission) {
+            CameraInfoService.getWideRangeCameraInfo()?.let {
+                changeCamera(it)
+            }
+        }
     }
 
     override fun onResume() {
         super.onResume()
 
-        if (mViewFinder.isActivated) {
+        if (mViewFinder.isActivated && isPermission) {
             CameraInfoService.getWideRangeCameraInfo()?.let {
                 changeCamera(it)
             }
@@ -224,9 +233,6 @@ class MainActivity : AppCompatActivity() {
             mViewFinder.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
                 override fun onSurfaceTextureAvailable(p0: SurfaceTexture, p1: Int, p2: Int) {
                     initCamera360Manager()
-                    CameraInfoService.getWideRangeCameraInfo()?.let {
-                        changeCamera(it)
-                    }
                 }
 
                 override fun onSurfaceTextureSizeChanged(p0: SurfaceTexture, p1: Int, p2: Int) {
