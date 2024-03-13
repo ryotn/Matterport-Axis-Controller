@@ -154,7 +154,9 @@ class Camera360Manager(context: Context) {
         mCameraDevice?.let { cameraDevice ->
             var size = Size(1024, 1024)
             getSupportSizes(cameraDevice.id)?.let {
-                size = it[0]
+                size = it.filter { s ->
+                    s.width in 1025..2023 && (s.height.toFloat() / s.width.toFloat()) == 0.75F
+                }[0]
             }
             mode?.let {
                 val extensionsSizes = getExtensionSupportSizes(cameraDevice.id, it)
@@ -172,7 +174,6 @@ class Camera360Manager(context: Context) {
             configurations.add(config)
 
             if (mode != null) {
-
                 val extensionConfiguration = ExtensionSessionConfiguration(
                     mode,
                     configurations,
