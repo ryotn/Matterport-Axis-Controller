@@ -103,9 +103,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        permissionResults.launch(arrayOf(android.Manifest.permission.BLUETOOTH_CONNECT,
-            android.Manifest.permission.BLUETOOTH_SCAN,
-            android.Manifest.permission.CAMERA))
         mProcessingView = findViewById(R.id.processingView)
         mDefaultPreference = PreferenceManager.getDefaultSharedPreferences(this)
         mMatterportAxisManager = MatterportAxisManager(context = this)
@@ -210,12 +207,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initCamera360Manager() {
+        if (mCamera360Manager?.isStart == true) return
+        mRadioGroupLensSel.check(mRadioWideLens.id)
+        mRadioGroupModeSel.check(mRadioModeNormal.id)
+
         if (mCamera360Manager == null) {
             mCamera360Manager = Camera360Manager(context = this)
             mCamera360Manager?.mListener = mCamera360ManagerListener
         }
 
-        if (mViewFinder.isActivated && isPermission) {
+        if (isPermission) {
             CameraInfoService.getWideRangeCameraInfo()?.let {
                 changeCamera(it)
             }
@@ -225,20 +226,20 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
-        if (mViewFinder.isActivated && isPermission) {
-            CameraInfoService.getWideRangeCameraInfo()?.let {
-                changeCamera(it)
-            }
-        } else {
+        Log.d(TAG, "onResume")
+        if (!mViewFinder.isActivated) {
             mViewFinder.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
                 override fun onSurfaceTextureAvailable(p0: SurfaceTexture, p1: Int, p2: Int) {
-                    initCamera360Manager()
+                    permissionResults.launch(arrayOf(android.Manifest.permission.BLUETOOTH_CONNECT,
+                        android.Manifest.permission.BLUETOOTH_SCAN,
+                        android.Manifest.permission.CAMERA))
                 }
 
                 override fun onSurfaceTextureSizeChanged(p0: SurfaceTexture, p1: Int, p2: Int) {
                 }
 
                 override fun onSurfaceTextureDestroyed(p0: SurfaceTexture): Boolean {
+                    Log.d(TAG, "onSurfaceTextureDestroyed")
                     return true
                 }
 
@@ -248,9 +249,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun changeCamera(extendedCameraInfo: CameraInfoService.ExtendedCameraInfo) {
+    override fun onDestroy() {
+        super.onDestroy()
+        mCamera360Manager?.stopCamera()
+        mMatterportAxisManager.disconnect()
+        Log.d(TAG, "onDestroy")
+    }
+
+    private fun changeCamera(extendedCameraInfo: CameraInfoService.ExtendedCameraInfo, mode: Int? = null) {
+        mCamera360Manager?.stopCamera()
         mRadioGroupModeSel.check(mRadioModeNormal.id)
-        mCamera360Manager?.startCamera(mViewFinder, extendedCameraInfo.cameraId, extendedCameraInfo.physicalCameraId)
+        mCamera360Manager?.startCamera(mViewFinder ,extendedCameraInfo.cameraId ,extendedCameraInfo.physicalCameraId, mode)
         mRadioModeHDR.isEnabled = extendedCameraInfo.isHDR
         mRadioModeNight.isEnabled = extendedCameraInfo.isNightMode
     }
@@ -341,9 +350,7 @@ class MainActivity : AppCompatActivity() {
 
     private val mCamera360ManagerListener = object : Camera360Manager.Camera360ManagerListener {
         override fun initFinish() {
-            CameraInfoService.getWideRangeCameraInfo()?.let {
-                changeCamera(it)
-            }
+            initCamera360Manager()
 
             CameraInfoService.getSuperWideRangeCameraInfo()?.let {
                 mRadioUltraWideLens.isEnabled = true

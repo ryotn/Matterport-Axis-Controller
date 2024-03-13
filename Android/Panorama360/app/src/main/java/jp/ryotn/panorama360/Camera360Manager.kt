@@ -72,6 +72,7 @@ class Camera360Manager(context: Context) {
     private var mExtensionsManager: ExtensionsManager? =null
 
     var mListener: Camera360ManagerListener? = null
+    var isStart = false
 
     interface Camera360ManagerListener {
 
@@ -100,16 +101,19 @@ class Camera360Manager(context: Context) {
         cameraId.let { id ->
             mCameraManager.openCamera(id, object: CameraDevice.StateCallback() {
                 override fun onOpened(camera: CameraDevice) {
+                    isStart = true
                     mCameraDevice = camera
                     createCameraPreviewSession(viewFinder, physicalCameraId)
                 }
 
                 override fun onDisconnected(camera: CameraDevice) {
+                    isStart = false
                     mCameraDevice?.close()
                     mCameraDevice = null
                 }
 
                 override fun onError(camera: CameraDevice, p1: Int) {
+                    isStart = true
                     mCameraDevice?.close()
                     mCameraDevice = null
                 }
@@ -118,7 +122,9 @@ class Camera360Manager(context: Context) {
     }
 
     fun stopCamera() {
-        mCaptureSession?.stopRepeating()
+        isStart = false
+        mCaptureSession?.close()
+        mCaptureSession = null
         mCameraDevice?.close()
         mCameraDevice = null
     }
