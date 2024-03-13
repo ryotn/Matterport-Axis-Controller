@@ -56,6 +56,7 @@ class Camera360Manager(context: Context) {
     }
     private var mCameraDevice: CameraDevice? = null
     private var mCaptureSession: CameraCaptureSession? = null
+    private var mCaptureExtensionSession: CameraExtensionSession? = null
     private var mPreviewRequestBuilder: CaptureRequest.Builder? = null
     private var mPhysicalCameraId: String? = null
     private var mSurface: Surface? = null
@@ -126,8 +127,11 @@ class Camera360Manager(context: Context) {
         isStart = false
         mCaptureSession?.close()
         mCaptureSession = null
+        mCaptureExtensionSession?.close()
+        mCaptureExtensionSession = null
         mCameraDevice?.close()
         mCameraDevice = null
+        mPreviewRequestBuilder = null
     }
 
     private fun getExtensionSupportSizes(id: String, extension: Int): List<Size> {
@@ -208,9 +212,10 @@ class Camera360Manager(context: Context) {
                     val captureRequest =
                         cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
                             addTarget(mSurface!!)
-                        }.build()
+                        }
+                    mPreviewRequestBuilder = captureRequest
                     session.setRepeatingRequest(
-                        captureRequest,
+                        captureRequest.build(),
                         Dispatchers.IO.asExecutor(),
                         captureCallbacks
                     )
@@ -275,6 +280,7 @@ class Camera360Manager(context: Context) {
         mPreviewRequestBuilder?.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF)
         mPreviewRequestBuilder?.let {
             mCaptureSession?.setRepeatingRequest(it.build(), null, null)
+            mCaptureExtensionSession?.setRepeatingRequest(it.build(), Dispatchers.IO.asExecutor(), captureCallbacks)
         }
     }
 

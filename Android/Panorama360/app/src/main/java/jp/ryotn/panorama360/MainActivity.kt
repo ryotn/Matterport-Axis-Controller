@@ -37,7 +37,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val mViewFinder: TextureView by lazy {
-        findViewById<TextureView>(R.id.viewFinder)
+        findViewById(R.id.viewFinder)
     }
 
     private lateinit var mDefaultPreference: SharedPreferences
@@ -190,21 +190,33 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        mRadioGroupModeSel.setOnCheckedChangeListener { _, checkedId ->
+        mRadioModeNormal.setOnClickListener {
+            changeRadioModeSelButton(it as RadioButton)
+        }
+        mRadioModeNight.setOnClickListener {
+            changeRadioModeSelButton(it as RadioButton)
+        }
+        mRadioModeHDR.setOnClickListener {
+            changeRadioModeSelButton(it as RadioButton)
+        }
+
+        mMatterportAxisManager.mListener = mMatterportAxisManagerListener
+    }
+
+    private fun changeRadioModeSelButton(button: RadioButton) {
+        if (mRadioGroupModeSel.checkedRadioButtonId == button.id) {
             var mode: Int? = null
-            if (mRadioModeNormal.id == checkedId) {
+            if (mRadioModeNormal.id == button.id) {
                 mode = null
-            } else if (mRadioModeHDR.id == checkedId) {
+            } else if (mRadioModeHDR.id == button.id) {
                 mode = CameraExtensionCharacteristics.EXTENSION_HDR
-            } else if (mRadioModeNight.id == checkedId) {
+            } else if (mRadioModeNight.id == button.id) {
                 mode = CameraExtensionCharacteristics.EXTENSION_NIGHT
             }
             mSelectedCameraInfo?.let {
                 changeCamera(it, mode)
             }
         }
-
-        mMatterportAxisManager.mListener = mMatterportAxisManagerListener
     }
 
     private fun initCamera360Manager() {
