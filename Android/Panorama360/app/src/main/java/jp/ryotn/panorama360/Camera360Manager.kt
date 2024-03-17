@@ -19,6 +19,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.ParcelFileDescriptor
 import android.util.Log
+import android.util.Range
 import android.util.Size
 import android.view.Surface
 import android.view.TextureView
@@ -47,7 +48,13 @@ data class Exif(val tag: String, val value: String) {
 class Camera360Manager(context: Context) {
     companion object {
         private const val TAG = "Camera360Manager"
-        private const val IMAGE_BUFFER_SIZE = 3
+        private const val IMAGE_BUFFER_SIZE = 7
+        val EXPOSURE_BRACKET_LIST = arrayOf(
+            intArrayOf(0),
+            intArrayOf(0, -1, 1),
+            intArrayOf(0, -2, -1, 1, 2),
+            intArrayOf(0, -3, -2, -1, 1, 2, 3)
+        )
     }
 
     private val mContext = context
@@ -61,6 +68,8 @@ class Camera360Manager(context: Context) {
     private var mPhysicalCameraId: String? = null
     private var mSurface: Surface? = null
     private var mImageReader: ImageReader? = null
+    private var mExposureBracketMode = 0
+    private var mExposureBracketCount = 0
 
     private var mCameraProvider: ProcessCameraProvider? = null
     private var mFocusDistance = mContext.resources.getString(R.string.default_focus_distance).toFloat()
@@ -76,6 +85,7 @@ class Camera360Manager(context: Context) {
     interface Camera360ManagerListener {
 
         fun initFinish()
+        fun startCameraConfigured(context: Context)
         fun takePhotoSuccess()
         fun takePhotoError()
     }
@@ -97,6 +107,7 @@ class Camera360Manager(context: Context) {
 
     @SuppressLint("MissingPermission")
     fun startCamera(viewFinder: TextureView, cameraId: String, physicalCameraId: String?, mode:Int? = null) {
+        mExposureBracketMode = 0
         cameraId.let { id ->
             mCameraManager.openCamera(id, object: CameraDevice.StateCallback() {
                 override fun onOpened(camera: CameraDevice) {
@@ -208,6 +219,7 @@ class Camera360Manager(context: Context) {
                                 mPreviewSession?.setRepeatingRequest(it.build(), null, null)
                                 setFocusDistance(mFocusDistance)
                             }
+                            mListener?.startCameraConfigured(mContext)
                         }
 
                         override fun onConfigureFailed(session: CameraCaptureSession) {}
@@ -238,6 +250,8 @@ class Camera360Manager(context: Context) {
             } catch (e: CameraAccessException) {
                 Log.d(TAG, "Failed to preview capture request $e")
             }
+
+            mListener?.startCameraConfigured(mContext)
         }
 
         override fun onClosed(session: CameraExtensionSession) {
@@ -266,12 +280,26 @@ class Camera360Manager(context: Context) {
         return ""
     }
 
+    fun setExposureBracketMode(mode: Int) {
+         mExposureBracketMode = mode
+    }
+
     private fun getFocalLengthIn35mm(): Float {
         val cameraCharacteristics = getCameraCharacteristic(getCurrentCameraId())
         val sensorWidth = cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE)?.width ?: 0.0F
         val focalLength = cameraCharacteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)?.get(0) ?: 0.0F
 
         return (36 * focalLength) / sensorWidth
+    }
+
+    fun getAeCompensationRange(): Range<Int> {
+        val cameraCharacteristics = getCameraCharacteristic(getCurrentCameraId())
+        return cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE) ?:Range(0,0)
+    }
+
+    fun getAeCompensationStep(): Double {
+        val cameraCharacteristics = getCameraCharacteristic(getCurrentCameraId())
+        return cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_COMPENSATION_STEP)?.toDouble() ?: 0.0
     }
 
     private fun getFocusDistanceCalibration(): Int {
@@ -305,14 +333,26 @@ class Camera360Manager(context: Context) {
             return
         }
 
-        val createFile = saveDocumentFile.createFile("image/jpeg", "$mFileCount.jpg")
-        val outputStream = createFile?.uri?.let { mContext.contentResolver.openOutputStream(it) }
+        val exposureStep = getAeCompensationStep()
+        val exposureBracketList = EXPOSURE_BRACKET_LIST[mExposureBracketMode]
+        val isExposureBracket = exposureBracketList.count() != 1
 
-        val captureRequestBuilder =
-            mCameraDevice?.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE)
-                .apply {
-                    this?.addTarget(mImageReader!!.surface)
-                }
+        val requestList: MutableList<CaptureRequest> = ArrayList()
+
+        exposureBracketList.forEach { exposureBracket ->
+            val captureRequestBuilder =
+                mCameraDevice?.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE)
+                    .apply {
+                        this?.addTarget(mImageReader!!.surface)
+                        this?.set(CaptureRequest.CONTROL_AE_LOCK, true)
+                        this?.set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,
+                            (exposureBracket.toDouble() / exposureStep).toInt()
+                        )
+                        this?.set(CaptureRequest.LENS_FOCUS_DISTANCE, mFocusDistance)
+                        this?.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF)
+                    }
+            captureRequestBuilder?.build()?.let { requestList.add(it) }
+        }
         mImageReader?.setOnImageAvailableListener({ reader ->
             val image = reader.acquireNextImage()
             Log.d(TAG, "Image available in queue: ${image.timestamp}")
@@ -320,51 +360,61 @@ class Camera360Manager(context: Context) {
                 ImageFormat.JPEG, ImageFormat.DEPTH_JPEG -> {
                     val buffer = image.planes[0].buffer
                     val bytes = ByteArray(buffer.remaining()).apply { buffer.get(this) }
+                    var fileName = "$mFileCount.jpg"
+                    if (isExposureBracket) {
+                        fileName = "${mFileCount}_EV${exposureBracketList[mExposureBracketCount]}.jpg"
+                    }
+
+                    val createFile = saveDocumentFile.createFile("image/jpeg", fileName)
+                    val outputStream = createFile?.uri?.let { mContext.contentResolver.openOutputStream(it) }
                     try {
                         outputStream?.write(bytes)
                         outputStream?.close()
                         val focalLengthIn35mm = getFocalLengthIn35mm()
                         val exifs = arrayOf(Exif(ExifInterface.TAG_FOCAL_LENGTH_IN_35MM_FILM, focalLengthIn35mm.toInt().toString()),
                             Exif(ExifInterface.TAG_USER_COMMENT, "focalLengthIn35mm:$focalLengthIn35mm"),
-                            Exif(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_ROTATE_90.toString())
+                            Exif(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_ROTATE_90.toString()),
+                            Exif(ExifInterface.TAG_EXPOSURE_BIAS_VALUE, exposureBracketList[mExposureBracketCount].toString())
                         )
                         writeEXIFWithFileDescriptor(exifs, createFile!!.uri)
                         image.close()
-                        mListener?.takePhotoSuccess()
                         val msg = "Photo capture succeeded: ${createFile.uri}"
                         Log.d(TAG, msg)
-                        mFileCount++
+                        mExposureBracketCount++
+                        if (mExposureBracketCount >= exposureBracketList.count()) {
+                            mFileCount++
+                            mExposureBracketCount = 0
+                            mListener?.takePhotoSuccess()
+                        }
                     } catch (exc: IOException) {
                         Log.e(TAG, "Unable to write JPEG image to file", exc)
                     }
                 }
             }
 
-            mImageReader?.setOnImageAvailableListener(null, null)
+            //mImageReader?.setOnImageAvailableListener(null, null)
         }, Handler(HandlerThread("CameraThread").apply { start() }.looper))
 
-        if (captureRequestBuilder != null) {
-            mPreviewSession?.capture(captureRequestBuilder.build(), object : CameraCaptureSession.CaptureCallback(){
-                override fun onCaptureStarted(
-                    session: CameraCaptureSession,
-                    request: CaptureRequest,
-                    timestamp: Long,
-                    frameNumber: Long
-                ) {
-                    super.onCaptureStarted(session, request, timestamp, frameNumber)
-                    Log.d(TAG, "onCaptureStarted")
-                }
+        mPreviewSession?.captureBurst(requestList, object : CameraCaptureSession.CaptureCallback(){
+            override fun onCaptureStarted(
+                session: CameraCaptureSession,
+                request: CaptureRequest,
+                timestamp: Long,
+                frameNumber: Long
+            ) {
+                super.onCaptureStarted(session, request, timestamp, frameNumber)
+                Log.d(TAG, "onCaptureStarted")
+            }
 
-                override fun onCaptureCompleted(
-                    session: CameraCaptureSession,
-                    request: CaptureRequest,
-                    result: TotalCaptureResult
-                ) {
-                    super.onCaptureCompleted(session, request, result)
-                    Log.d(TAG, "onCaptureCompleted")
-                }
-            }, Handler(HandlerThread("CameraThread").apply { start() }.looper))
-        }
+            override fun onCaptureCompleted(
+                session: CameraCaptureSession,
+                request: CaptureRequest,
+                result: TotalCaptureResult
+            ) {
+                super.onCaptureCompleted(session, request, result)
+                Log.d(TAG, "onCaptureCompleted")
+            }
+        }, Handler(HandlerThread("CameraThread").apply { start() }.looper))
     }
 
     fun setOutputDirectory(path: Uri) {

@@ -19,4 +19,11 @@
     <string name="normal">Normal</string>
     <string name="HDR">HDR</string>
     <string name="night">Night</string>
+    <string name="exposure_bracket_mode">Exposure Bracket Mode</string>
+    <string-array name="exposure_bracket_mode_items">
+        <item>None</item>
+        <item>+-1 EV</item>
+        <item>+-2 EV</item>
+        <item>+-3 EV</item>
+    </string-array>
 </resources>
