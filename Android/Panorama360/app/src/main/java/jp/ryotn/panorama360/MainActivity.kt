@@ -3,12 +3,15 @@ package jp.ryotn.panorama360
 import android.app.Activity
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.SurfaceTexture
+import android.hardware.camera2.CameraExtensionCharacteristics
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.KeyEvent
+import android.view.TextureView
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
@@ -19,8 +22,6 @@ import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.extensions.ExtensionMode
-import androidx.camera.view.PreviewView
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
@@ -35,8 +36,12 @@ class MainActivity : AppCompatActivity() {
         private const val TAG = "MainActivity"
     }
 
+    private val mViewFinder: TextureView by lazy {
+        findViewById(R.id.viewFinder)
+    }
+
     private lateinit var mDefaultPreference: SharedPreferences
-    private lateinit var mCamera360Manager: Camera360Manager
+    private var mCamera360Manager: Camera360Manager? = null
     private lateinit var mMatterportAxisManager: MatterportAxisManager
     private lateinit var mSoundPlayer: SoundPlayer
     private lateinit var mTextState: TextView
@@ -46,7 +51,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mBtnResetAngle: Button
     private lateinit var mBtnTestCapture: Button
     private lateinit var mBtnCreateDir: Button
-    private lateinit var mViewFinder: PreviewView
     private lateinit var mTextFocusDistance: TextView
     private lateinit var mSeekBarFocusDistance: SeekBar
     private lateinit var mRadioWideLens: RadioButton
@@ -58,6 +62,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mRadioGroupModeSel: RadioGroup
     private lateinit var mProcessingView: FrameLayout
 
+    private var isPermission = false
+    private var mSelectedCameraInfo: CameraInfoService.ExtendedCameraInfo? = null
+
     private var isShooting: Boolean = false
     private var mShotAngleSum: Int = 0
     private var mRotationAngle: Int = 30
@@ -67,8 +74,8 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "全部権限取れた", Toast.LENGTH_SHORT).show()
 
             mBtnConnect.isEnabled = true
-            mCamera360Manager = Camera360Manager(context = this)
-            mCamera360Manager.mListener = mCamera360ManagerListener
+            isPermission = true
+            initCamera360Manager()
             getFilePath()
         } else {
             Toast.makeText(this, "全部権限取れなかった！", Toast.LENGTH_SHORT).show()
@@ -89,16 +96,13 @@ class MainActivity : AppCompatActivity() {
                     putString("uri", uri.toString())
                 }
 
-                mCamera360Manager.setOutputDirectory(uri)
+                mCamera360Manager?.setOutputDirectory(uri)
             }
         }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        permissionResults.launch(arrayOf(android.Manifest.permission.BLUETOOTH_CONNECT,
-            android.Manifest.permission.BLUETOOTH_SCAN,
-            android.Manifest.permission.CAMERA))
         mProcessingView = findViewById(R.id.processingView)
         mDefaultPreference = PreferenceManager.getDefaultSharedPreferences(this)
         mMatterportAxisManager = MatterportAxisManager(context = this)
@@ -112,7 +116,6 @@ class MainActivity : AppCompatActivity() {
         mBtnConnect = findViewById(R.id.btnConnect)
         mBtnTestCapture = findViewById(R.id.btnTestCapture)
         mBtnCreateDir = findViewById(R.id.btnCreateDir)
-        mViewFinder = findViewById(R.id.viewFinder)
         mTextFocusDistance = findViewById(R.id.txtFocusDistance)
         mSeekBarFocusDistance = findViewById(R.id.seekFocusDistance)
         mRadioWideLens = findViewById(R.id.radioWide)
@@ -159,21 +162,21 @@ class MainActivity : AppCompatActivity() {
 
             override fun onStopTrackingTouch(seekBar: SeekBar) {
                 val focalDistance = seekBar.progress / 10.0F
-                mCamera360Manager.setFocusDistance(focalDistance)
+                mCamera360Manager?.setFocusDistance(focalDistance)
             }
         })
 
         mBtnTestCapture.setOnClickListener {
             mProcessingView.visibility = View.VISIBLE
-            mCamera360Manager.takePhoto()
+            mCamera360Manager?.takePhoto()
         }
 
         mBtnCreateDir.setOnClickListener {
-            mCamera360Manager.createDir()
+            mCamera360Manager?.createDir()
         }
 
         mRadioGroupLensSel.setOnCheckedChangeListener { _, checkedId ->
-            mCamera360Manager.stopCamera()
+            mCamera360Manager?.stopCamera()
             if (mRadioWideLens.id == checkedId) {
                 mRotationAngle = 30
                 CameraInfoService.getWideRangeCameraInfo()?.let {
@@ -187,25 +190,90 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        mRadioGroupModeSel.setOnCheckedChangeListener { _, checkedId ->
-            mCamera360Manager.stopCamera()
-            var mode: Int? = null
-            if (mRadioModeNormal.id == checkedId) {
-                mode = null
-            } else if (mRadioModeHDR.id == checkedId) {
-                mode = ExtensionMode.HDR
-            } else if (mRadioModeNight.id == checkedId) {
-                mode = ExtensionMode.NIGHT
-            }
-            mCamera360Manager.startCamera(mViewFinder ,null ,mode)
+        mRadioModeNormal.setOnClickListener {
+            changeRadioModeSelButton(it as RadioButton)
+        }
+        mRadioModeNight.setOnClickListener {
+            changeRadioModeSelButton(it as RadioButton)
+        }
+        mRadioModeHDR.setOnClickListener {
+            changeRadioModeSelButton(it as RadioButton)
         }
 
         mMatterportAxisManager.mListener = mMatterportAxisManagerListener
     }
 
-    private fun changeCamera(extendedCameraInfo: CameraInfoService.ExtendedCameraInfo) {
+    private fun changeRadioModeSelButton(button: RadioButton) {
+        if (mRadioGroupModeSel.checkedRadioButtonId == button.id) {
+            var mode: Int? = null
+            if (mRadioModeNormal.id == button.id) {
+                mode = null
+            } else if (mRadioModeHDR.id == button.id) {
+                mode = CameraExtensionCharacteristics.EXTENSION_HDR
+            } else if (mRadioModeNight.id == button.id) {
+                mode = CameraExtensionCharacteristics.EXTENSION_NIGHT
+            }
+            mSelectedCameraInfo?.let {
+                changeCamera(it, mode)
+            }
+        }
+    }
+
+    private fun initCamera360Manager() {
+        if (mCamera360Manager?.isStart == true) return
+        mRadioGroupLensSel.check(mRadioWideLens.id)
         mRadioGroupModeSel.check(mRadioModeNormal.id)
-        mCamera360Manager.startCamera(mViewFinder, extendedCameraInfo.cameraId)
+
+        if (mCamera360Manager == null) {
+            mCamera360Manager = Camera360Manager(context = this)
+            mCamera360Manager?.mListener = mCamera360ManagerListener
+        }
+
+        if (isPermission) {
+            CameraInfoService.getWideRangeCameraInfo()?.let {
+                changeCamera(it)
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        Log.d(TAG, "onResume")
+        if (!mViewFinder.isActivated) {
+            mViewFinder.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
+                override fun onSurfaceTextureAvailable(p0: SurfaceTexture, p1: Int, p2: Int) {
+                    permissionResults.launch(arrayOf(android.Manifest.permission.BLUETOOTH_CONNECT,
+                        android.Manifest.permission.BLUETOOTH_SCAN,
+                        android.Manifest.permission.CAMERA))
+                }
+
+                override fun onSurfaceTextureSizeChanged(p0: SurfaceTexture, p1: Int, p2: Int) {
+                }
+
+                override fun onSurfaceTextureDestroyed(p0: SurfaceTexture): Boolean {
+                    Log.d(TAG, "onSurfaceTextureDestroyed")
+                    return true
+                }
+
+                override fun onSurfaceTextureUpdated(p0: SurfaceTexture) {
+                }
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mCamera360Manager?.stopCamera()
+        mMatterportAxisManager.disconnect()
+        Log.d(TAG, "onDestroy")
+    }
+
+    private fun changeCamera(extendedCameraInfo: CameraInfoService.ExtendedCameraInfo, mode: Int? = null) {
+        mSelectedCameraInfo = extendedCameraInfo
+        mCamera360Manager?.stopCamera()
+        if (mode == null) mRadioGroupModeSel.check(mRadioModeNormal.id)
+        mCamera360Manager?.startCamera(mViewFinder ,extendedCameraInfo.cameraId ,extendedCameraInfo.physicalCameraId, mode)
         mRadioModeHDR.isEnabled = extendedCameraInfo.isHDR
         mRadioModeNight.isEnabled = extendedCameraInfo.isNightMode
     }
@@ -216,7 +284,7 @@ class MainActivity : AppCompatActivity() {
         mBtnStart.isEnabled = false
         mShotAngleSum = mRotationAngle
         Handler(Looper.getMainLooper()).postDelayed({
-            mCamera360Manager.takePhoto()
+            mCamera360Manager?.takePhoto()
         }, 500)
         Handler(Looper.getMainLooper()).postDelayed({
             isShooting = true
@@ -232,7 +300,7 @@ class MainActivity : AppCompatActivity() {
             dir?.let {
                 if (it.canWrite()) {
                     Log.d(TAG, "保存先のPermission取得済み $uriStr")
-                    mCamera360Manager.setOutputDirectory(uriStr.toUri())
+                    mCamera360Manager?.setOutputDirectory(uriStr.toUri())
                 } else {
                     getFilePermission()
                 }
@@ -287,7 +355,7 @@ class MainActivity : AppCompatActivity() {
                         mSoundPlayer.playCompSound()
                     } else if (angle == mShotAngleSum) {
                         mShotAngleSum += mRotationAngle
-                        mCamera360Manager.takePhoto()
+                        mCamera360Manager?.takePhoto()
                     }
                 }
             }
@@ -296,9 +364,7 @@ class MainActivity : AppCompatActivity() {
 
     private val mCamera360ManagerListener = object : Camera360Manager.Camera360ManagerListener {
         override fun initFinish() {
-            CameraInfoService.getWideRangeCameraInfo()?.let {
-                changeCamera(it)
-            }
+            initCamera360Manager()
 
             CameraInfoService.getSuperWideRangeCameraInfo()?.let {
                 mRadioUltraWideLens.isEnabled = true
