@@ -24,11 +24,6 @@ import android.view.Surface
 import android.view.TextureView
 import androidx.annotation.OptIn
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
-import androidx.camera.core.Camera
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.Preview
 import androidx.camera.extensions.ExtensionsManager
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
@@ -68,15 +63,11 @@ class Camera360Manager(context: Context) {
     private var mImageReader: ImageReader? = null
 
     private var mCameraProvider: ProcessCameraProvider? = null
-    private var mPreview: Preview? = null
-    private var mImageCapture: ImageCapture? = null
-    private var mCamera: Camera? = null
     private var mFocusDistance = mContext.resources.getString(R.string.default_focus_distance).toFloat()
     private var mFileCount = 0
     private val mDateFormatter = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss")
     private var mDocumentFile: DocumentFile? = null
     private var mSaveDocumentFile: DocumentFile? = null
-    private var mSelectCameraSelector: CameraSelector? = null
     private var mExtensionsManager: ExtensionsManager? =null
 
     var mListener: Camera360ManagerListener? = null
