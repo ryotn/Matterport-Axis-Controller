@@ -1,6 +1,7 @@
 package jp.ryotn.panorama360
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.SurfaceTexture
@@ -10,15 +11,19 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.util.Range
 import android.view.KeyEvent
 import android.view.TextureView
 import android.view.View
 import android.view.WindowManager
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.SeekBar
+import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -61,6 +66,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mRadioModeNight: RadioButton
     private lateinit var mRadioGroupModeSel: RadioGroup
     private lateinit var mProcessingView: FrameLayout
+    private lateinit var mExposureBracketModeSpinner: Spinner
 
     private var isPermission = false
     private var mSelectedCameraInfo: CameraInfoService.ExtendedCameraInfo? = null
@@ -125,6 +131,7 @@ class MainActivity : AppCompatActivity() {
         mRadioModeHDR = findViewById(R.id.radioHDR)
         mRadioModeNight = findViewById(R.id.radioNight)
         mRadioGroupModeSel = findViewById(R.id.radioGroupModeSel)
+        mExposureBracketModeSpinner = findViewById(R.id.exposureBracketModeSpinner)
 
         mBtnConnect.setOnClickListener {
             if (mMatterportAxisManager.isConnected()) {
@@ -198,6 +205,16 @@ class MainActivity : AppCompatActivity() {
         }
         mRadioModeHDR.setOnClickListener {
             changeRadioModeSelButton(it as RadioButton)
+        }
+
+        mExposureBracketModeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
+                mCamera360Manager?.setExposureBracketMode(pos)
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+            }
+
         }
 
         mMatterportAxisManager.mListener = mMatterportAxisManagerListener
@@ -369,6 +386,23 @@ class MainActivity : AppCompatActivity() {
             CameraInfoService.getSuperWideRangeCameraInfo()?.let {
                 mRadioUltraWideLens.isEnabled = true
             }
+        }
+
+        override fun startCameraConfigured(context: Context) {
+            val exposureBracketList = Camera360Manager.EXPOSURE_BRACKET_LIST
+            val range = mCamera360Manager?.getAeCompensationRange() ?: Range(0,0)
+            val step = mCamera360Manager?.getAeCompensationStep() ?: 0.0
+
+            val itemArray = mutableListOf("None")
+
+            exposureBracketList.forEach {
+                if (it.max() == 0) return@forEach
+                if (it.max() <= (range.upper * step)) {
+                    itemArray.add("+-${it.max()} EV")
+                }
+            }
+
+            mExposureBracketModeSpinner.adapter = ArrayAdapter(context, android.R.layout.simple_spinner_dropdown_item, itemArray)
         }
 
         override fun takePhotoSuccess() {

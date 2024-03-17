@@ -85,6 +85,7 @@ class Camera360Manager(context: Context) {
     interface Camera360ManagerListener {
 
         fun initFinish()
+        fun startCameraConfigured(context: Context)
         fun takePhotoSuccess()
         fun takePhotoError()
     }
@@ -106,6 +107,7 @@ class Camera360Manager(context: Context) {
 
     @SuppressLint("MissingPermission")
     fun startCamera(viewFinder: TextureView, cameraId: String, physicalCameraId: String?, mode:Int? = null) {
+        mExposureBracketMode = 0
         cameraId.let { id ->
             mCameraManager.openCamera(id, object: CameraDevice.StateCallback() {
                 override fun onOpened(camera: CameraDevice) {
@@ -217,6 +219,7 @@ class Camera360Manager(context: Context) {
                                 mPreviewSession?.setRepeatingRequest(it.build(), null, null)
                                 setFocusDistance(mFocusDistance)
                             }
+                            mListener?.startCameraConfigured(mContext)
                         }
 
                         override fun onConfigureFailed(session: CameraCaptureSession) {}
@@ -247,6 +250,8 @@ class Camera360Manager(context: Context) {
             } catch (e: CameraAccessException) {
                 Log.d(TAG, "Failed to preview capture request $e")
             }
+
+            mListener?.startCameraConfigured(mContext)
         }
 
         override fun onClosed(session: CameraExtensionSession) {
@@ -275,6 +280,10 @@ class Camera360Manager(context: Context) {
         return ""
     }
 
+    fun setExposureBracketMode(mode: Int) {
+         mExposureBracketMode = mode
+    }
+
     private fun getFocalLengthIn35mm(): Float {
         val cameraCharacteristics = getCameraCharacteristic(getCurrentCameraId())
         val sensorWidth = cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE)?.width ?: 0.0F
@@ -283,12 +292,12 @@ class Camera360Manager(context: Context) {
         return (36 * focalLength) / sensorWidth
     }
 
-    private fun getAeCompensationRange(): Range<Int> {
+    fun getAeCompensationRange(): Range<Int> {
         val cameraCharacteristics = getCameraCharacteristic(getCurrentCameraId())
         return cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE) ?:Range(0,0)
     }
 
-    private fun getAeCompensationStep(): Double {
+    fun getAeCompensationStep(): Double {
         val cameraCharacteristics = getCameraCharacteristic(getCurrentCameraId())
         return cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_COMPENSATION_STEP)?.toDouble() ?: 0.0
     }
