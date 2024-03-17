@@ -10,9 +10,13 @@ import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraExtensionSession
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
+import android.hardware.camera2.TotalCaptureResult
 import android.hardware.camera2.params.ExtensionSessionConfiguration
 import android.hardware.camera2.params.OutputConfiguration
+import android.media.ImageReader
 import android.net.Uri
+import android.os.Handler
+import android.os.HandlerThread
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import android.util.Size
@@ -48,6 +52,7 @@ data class Exif(val tag: String, val value: String) {
 class Camera360Manager(context: Context) {
     companion object {
         private const val TAG = "Camera360Manager"
+        private const val IMAGE_BUFFER_SIZE = 3
     }
 
     private val mContext = context
@@ -55,11 +60,12 @@ class Camera360Manager(context: Context) {
         mContext.getSystemService(Context.CAMERA_SERVICE) as CameraManager
     }
     private var mCameraDevice: CameraDevice? = null
-    private var mCaptureSession: CameraCaptureSession? = null
+    private var mPreviewSession: CameraCaptureSession? = null
     private var mCaptureExtensionSession: CameraExtensionSession? = null
     private var mPreviewRequestBuilder: CaptureRequest.Builder? = null
     private var mPhysicalCameraId: String? = null
     private var mSurface: Surface? = null
+    private var mImageReader: ImageReader? = null
 
     private var mCameraProvider: ProcessCameraProvider? = null
     private var mPreview: Preview? = null
@@ -125,8 +131,8 @@ class Camera360Manager(context: Context) {
 
     fun stopCamera() {
         isStart = false
-        mCaptureSession?.close()
-        mCaptureSession = null
+        mPreviewSession?.close()
+        mPreviewSession = null
         mCaptureExtensionSession?.close()
         mCaptureExtensionSession = null
         mCameraDevice?.close()
@@ -134,17 +140,17 @@ class Camera360Manager(context: Context) {
         mPreviewRequestBuilder = null
     }
 
-    private fun getExtensionSupportSizes(id: String, extension: Int): List<Size> {
+    private fun getExtensionSupportSizes(id: String, extension: Int, imageFormat: Int): List<Size> {
         return mCameraManager
             .getCameraExtensionCharacteristics(id)
-            .getExtensionSupportedSizes(extension, ImageFormat.YUV_420_888)
+            .getExtensionSupportedSizes(extension, imageFormat)
     }
 
-    private fun getSupportSizes(id: String): Array<Size>? {
+    private fun getSupportSizes(id: String, imageFormat: Int): Array<Size>? {
         return mCameraManager
             .getCameraCharacteristics(id)
             .get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
-            ?.getOutputSizes(ImageFormat.YUV_420_888)
+            ?.getOutputSizes(imageFormat)
     }
 
     private fun createCameraPreviewSession(textureView: TextureView, physicalCameraId: String?, mode: Int?) {
@@ -153,25 +159,40 @@ class Camera360Manager(context: Context) {
         }
         mCameraDevice?.let { cameraDevice ->
             var size = Size(1024, 1024)
-            getSupportSizes(cameraDevice.id)?.let {
-                size = it.filter { s ->
+            var imageReaderSize = Size(1024, 1024)
+            getSupportSizes(cameraDevice.id, ImageFormat.YUV_420_888)?.let { sizes ->
+                size = sizes.filter { s ->
                     s.width in 1025..2023 && (s.height.toFloat() / s.width.toFloat()) == 0.75F
                 }[0]
             }
-            mode?.let {
-                val extensionsSizes = getExtensionSupportSizes(cameraDevice.id, it)
-                size = extensionsSizes[0]
+            getSupportSizes(cameraDevice.id, ImageFormat.JPEG)?.let { sizes ->
+                imageReaderSize = sizes.filter { s ->
+                    (s.height.toFloat() / s.width.toFloat()) == 0.75F
+                }.maxByOrNull { it.height * it.width }!!
+            }
+            mode?.let { mode ->
+                val extensionsSizes = getExtensionSupportSizes(cameraDevice.id, mode, ImageFormat.YUV_420_888)
+                size = extensionsSizes.filter { s ->
+                    s.width in 1025..2023 && (s.height.toFloat() / s.width.toFloat()) == 0.75F
+                }[0]
+                val extensionsSizesReader = getExtensionSupportSizes(cameraDevice.id, mode, ImageFormat.JPEG)
+                imageReaderSize = extensionsSizesReader.maxByOrNull { it.height * it.width }!!
             }
             val texture = textureView.surfaceTexture
             texture?.setDefaultBufferSize(size.width, size.height)
             mSurface = Surface(texture)
+            mImageReader = ImageReader.newInstance(
+                imageReaderSize.width, imageReaderSize.height, ImageFormat.JPEG, IMAGE_BUFFER_SIZE)
 
             mPhysicalCameraId = physicalCameraId
 
             val configurations: MutableList<OutputConfiguration> = ArrayList()
             val config = OutputConfiguration(mSurface!!)
+            val imageReaderConfig = OutputConfiguration(mImageReader!!.surface)
             if (mPhysicalCameraId != null) config.setPhysicalCameraId(mPhysicalCameraId)
+            if (mPhysicalCameraId != null) imageReaderConfig.setPhysicalCameraId(mPhysicalCameraId)
             configurations.add(config)
+            configurations.add(imageReaderConfig)
 
             if (mode != null) {
                 val extensionConfiguration = ExtensionSessionConfiguration(
@@ -192,8 +213,8 @@ class Camera360Manager(context: Context) {
                     object : CameraCaptureSession.StateCallback() {
                         override fun onConfigured(session: CameraCaptureSession) {
                             mPreviewRequestBuilder?.let {
-                                mCaptureSession = session
-                                mCaptureSession?.setRepeatingRequest(it.build(), null, null)
+                                mPreviewSession = session
+                                mPreviewSession?.setRepeatingRequest(it.build(), null, null)
                                 setFocusDistance(mFocusDistance)
                             }
                         }
@@ -218,7 +239,8 @@ class Camera360Manager(context: Context) {
                     session.setRepeatingRequest(
                         captureRequest.build(),
                         Dispatchers.IO.asExecutor(),
-                        captureCallbacks
+                        object : CameraExtensionSession.ExtensionCaptureCallback() {
+                        }
                     )
                 }
 
@@ -235,10 +257,6 @@ class Camera360Manager(context: Context) {
         override fun onConfigureFailed(session: CameraExtensionSession) {
             mCameraDevice?.close()
         }
-    }
-
-    private val captureCallbacks = object : CameraExtensionSession.ExtensionCaptureCallback() {
-        // Implement Capture Callbacks
     }
 
     private fun getCameraCharacteristic(cameraId: String): CameraCharacteristics {
@@ -280,43 +298,81 @@ class Camera360Manager(context: Context) {
         mPreviewRequestBuilder?.set(CaptureRequest.LENS_FOCUS_DISTANCE, mFocusDistance)
         mPreviewRequestBuilder?.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF)
         mPreviewRequestBuilder?.let {
-            mCaptureSession?.setRepeatingRequest(it.build(), null, null)
-            mCaptureExtensionSession?.setRepeatingRequest(it.build(), Dispatchers.IO.asExecutor(), captureCallbacks)
+            mPreviewSession?.setRepeatingRequest(it.build(), null, null)
+            mCaptureExtensionSession?.setRepeatingRequest(it.build(), Dispatchers.IO.asExecutor(),
+                object : CameraExtensionSession.ExtensionCaptureCallback() {
+                    // Implement Capture Callbacks
+                })
         }
     }
 
     fun takePhoto() {
-        val imageCapture = mImageCapture ?: return
         val saveDocumentFile = mSaveDocumentFile ?: return
         if (!saveDocumentFile.exists()) {
             createDir()
             takePhoto()
             return
         }
+
         val createFile = saveDocumentFile.createFile("image/jpeg", "$mFileCount.jpg")
         val outputStream = createFile?.uri?.let { mContext.contentResolver.openOutputStream(it) }
-        val outputOptions = outputStream?.let { ImageCapture.OutputFileOptions.Builder(it).build() }
 
-        outputOptions?.let {
-            imageCapture.takePicture(
-                it, Dispatchers.Default.asExecutor(), object : ImageCapture.OnImageSavedCallback {
-                    override fun onError(exc: ImageCaptureException) {
-                        Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
-                        mListener?.takePhotoError()
-                    }
-
-                    override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                        val msg = "Photo capture succeeded: ${output.savedUri}"
+        val captureRequestBuilder =
+            mCameraDevice?.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE)
+                .apply {
+                    this?.addTarget(mImageReader!!.surface)
+                }
+        mImageReader?.setOnImageAvailableListener({ reader ->
+            val image = reader.acquireNextImage()
+            Log.d(TAG, "Image available in queue: ${image.timestamp}")
+            when (image.format) {
+                ImageFormat.JPEG, ImageFormat.DEPTH_JPEG -> {
+                    val buffer = image.planes[0].buffer
+                    val bytes = ByteArray(buffer.remaining()).apply { buffer.get(this) }
+                    try {
+                        outputStream?.write(bytes)
+                        outputStream?.close()
                         val focalLengthIn35mm = getFocalLengthIn35mm()
                         val exifs = arrayOf(Exif(ExifInterface.TAG_FOCAL_LENGTH_IN_35MM_FILM, focalLengthIn35mm.toInt().toString()),
-                            Exif(ExifInterface.TAG_USER_COMMENT, "focalLengthIn35mm:$focalLengthIn35mm")
+                            Exif(ExifInterface.TAG_USER_COMMENT, "focalLengthIn35mm:$focalLengthIn35mm"),
+                            Exif(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_ROTATE_90.toString())
                         )
-                        writeEXIFWithFileDescriptor(exifs, createFile.uri)
+                        writeEXIFWithFileDescriptor(exifs, createFile!!.uri)
+                        image.close()
                         mListener?.takePhotoSuccess()
+                        val msg = "Photo capture succeeded: ${createFile.uri}"
                         Log.d(TAG, msg)
                         mFileCount++
+                    } catch (exc: IOException) {
+                        Log.e(TAG, "Unable to write JPEG image to file", exc)
                     }
-                })
+                }
+            }
+
+            mImageReader?.setOnImageAvailableListener(null, null)
+        }, Handler(HandlerThread("CameraThread").apply { start() }.looper))
+
+        if (captureRequestBuilder != null) {
+            mPreviewSession?.capture(captureRequestBuilder.build(), object : CameraCaptureSession.CaptureCallback(){
+                override fun onCaptureStarted(
+                    session: CameraCaptureSession,
+                    request: CaptureRequest,
+                    timestamp: Long,
+                    frameNumber: Long
+                ) {
+                    super.onCaptureStarted(session, request, timestamp, frameNumber)
+                    Log.d(TAG, "onCaptureStarted")
+                }
+
+                override fun onCaptureCompleted(
+                    session: CameraCaptureSession,
+                    request: CaptureRequest,
+                    result: TotalCaptureResult
+                ) {
+                    super.onCaptureCompleted(session, request, result)
+                    Log.d(TAG, "onCaptureCompleted")
+                }
+            }, Handler(HandlerThread("CameraThread").apply { start() }.looper))
         }
     }
 
