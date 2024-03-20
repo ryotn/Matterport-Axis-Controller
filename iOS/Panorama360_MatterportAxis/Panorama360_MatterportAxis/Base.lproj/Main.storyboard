@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="21507" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="32700.99.1234" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
     <device id="retina6_0" orientation="portrait" appearance="light"/>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21505"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22684"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
+        <capability name="UIMenu" message="Requires Xcode 11 or later." minToolsVersion="11.0" requiredIntegratedClassName="UICommandDiff"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -16,16 +18,8 @@
                         <rect key="frame" x="0.0" y="0.0" width="390" height="844"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="kV8-ys-55A">
-                                <rect key="frame" x="20" y="527" width="350" height="35"/>
-                                <state key="normal" title="Button"/>
-                                <buttonConfiguration key="configuration" style="filled" title="Connect"/>
-                                <connections>
-                                    <action selector="pushConnect:" destination="BYZ-38-t0r" eventType="touchUpInside" id="SVU-tT-bM6"/>
-                                </connections>
-                            </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="oOG-eL-jKY">
-                                <rect key="frame" x="20" y="653" width="117" height="35"/>
+                                <rect key="frame" x="20" y="578" width="117" height="35"/>
                                 <state key="normal" title="Button"/>
                                 <buttonConfiguration key="configuration" style="filled" title="Angle Reset"/>
                                 <connections>
@@ -33,15 +27,15 @@
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Cp3-x3-Ijg">
-                                <rect key="frame" x="20" y="718" width="350" height="35"/>
+                                <rect key="frame" x="20" y="643" width="350" height="35"/>
                                 <state key="normal" title="Button"/>
                                 <buttonConfiguration key="configuration" style="filled" title="Start Capture"/>
                                 <connections>
                                     <action selector="pushStartCapture:" destination="BYZ-38-t0r" eventType="touchUpInside" id="8oC-1o-PjU"/>
                                 </connections>
                             </button>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Status:" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="dvl-dS-rpS">
-                                <rect key="frame" x="20" y="582" width="350" height="41"/>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Disconnected Angle:380" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="dvl-dS-rpS">
+                                <rect key="frame" x="20" y="507" width="195" height="41"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="41" id="obx-xl-7qa"/>
                                 </constraints>
@@ -56,10 +50,9 @@
                                 </constraints>
                             </imageView>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="gmF-Jv-NwG">
-                                <rect key="frame" x="125" y="422" width="140" height="35"/>
+                                <rect key="frame" x="55.000000000000007" y="432" width="121.66666666666669" height="35"/>
                                 <constraints>
-                                    <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="140" id="rfX-be-6O3"/>
-                                    <constraint firstAttribute="height" constant="35" id="zqt-O8-C62"/>
+                                    <constraint firstAttribute="height" constant="35" id="Il0-jw-dIf"/>
                                 </constraints>
                                 <state key="normal" title="Button"/>
                                 <buttonConfiguration key="configuration" style="filled" title="Test Capture"/>
@@ -68,7 +61,7 @@
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Ahc-YA-giJ">
-                                <rect key="frame" x="253" y="653" width="117" height="35"/>
+                                <rect key="frame" x="253" y="578" width="117" height="35"/>
                                 <state key="normal" title="Button"/>
                                 <buttonConfiguration key="configuration" style="filled" title="Create Dir"/>
                                 <connections>
@@ -109,61 +102,88 @@
                                     <action selector="changeCamera:" destination="BYZ-38-t0r" eventType="valueChanged" id="tIt-2o-otL"/>
                                 </connections>
                             </segmentedControl>
-                            <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="1" translatesAutoresizingMaskIntoConstraints="NO" id="h6j-ZU-p8i">
-                                <rect key="frame" x="95" y="145" width="200" height="32"/>
-                                <color key="backgroundColor" white="0.66666666669999997" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <constraints>
-                                    <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="200" id="nv3-Pg-MBp"/>
-                                    <constraint firstAttribute="height" constant="31" id="vvQ-DT-vIp"/>
-                                </constraints>
-                                <segments>
-                                    <segment title="15°"/>
-                                    <segment title="30°"/>
-                                    <segment title="45°"/>
-                                    <segment title="60°"/>
-                                </segments>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="kV8-ys-55A">
+                                <rect key="frame" x="253" y="507" width="117" height="35"/>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="filled" title="Connect"/>
                                 <connections>
-                                    <action selector="changeAutoRotationAngle:" destination="BYZ-38-t0r" eventType="valueChanged" id="Spf-Ft-UUa"/>
+                                    <action selector="pushConnect:" destination="BYZ-38-t0r" eventType="touchUpInside" id="SVU-tT-bM6"/>
                                 </connections>
-                            </segmentedControl>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" showsMenuAsPrimaryAction="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" changesSelectionAsPrimaryAction="YES" translatesAutoresizingMaskIntoConstraints="NO" id="l2p-aK-k59">
+                                <rect key="frame" x="235" y="432" width="100" height="35"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="100" id="GqV-da-N3w"/>
+                                    <constraint firstAttribute="height" constant="35" id="U6U-J7-XVL"/>
+                                </constraints>
+                                <menu key="menu" title="Exposure Bracket Mode" id="sWe-fK-Xeo">
+                                    <children>
+                                        <command title="None" id="rm2-HQ-X17">
+                                            <connections>
+                                                <action selector="changeExposureMode:" destination="dkx-z0-nzr" id="EHN-pW-ef3"/>
+                                            </connections>
+                                        </command>
+                                        <command title="+-1 EV" id="m5p-Ro-wpT">
+                                            <connections>
+                                                <action selector="changeExposureMode:" destination="dkx-z0-nzr" id="8Ii-Y2-i2s"/>
+                                            </connections>
+                                        </command>
+                                        <command title="+-2 EV" id="ide-53-dLv">
+                                            <connections>
+                                                <action selector="changeExposureMode:" destination="dkx-z0-nzr" id="1Yg-LB-7i8"/>
+                                            </connections>
+                                        </command>
+                                        <command title="+-3 EV" menuElementState="on" id="JDi-n8-tqc">
+                                            <connections>
+                                                <action selector="changeExposureMode:" destination="dkx-z0-nzr" id="sbT-pH-CsG"/>
+                                            </connections>
+                                        </command>
+                                    </children>
+                                </menu>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="filled" title="ExposureBracketModeButton"/>
+                            </button>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
                             <constraint firstItem="Ahc-YA-giJ" firstAttribute="top" secondItem="dvl-dS-rpS" secondAttribute="bottom" constant="30" id="3wX-6l-bF2"/>
                             <constraint firstItem="LyN-RO-ldD" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="5Bv-FF-CNS"/>
-                            <constraint firstItem="kV8-ys-55A" firstAttribute="top" secondItem="LyN-RO-ldD" secondAttribute="bottom" constant="50" id="7iG-uu-6oz"/>
+                            <constraint firstItem="gmF-Jv-NwG" firstAttribute="leading" secondItem="LyN-RO-ldD" secondAttribute="leading" constant="10" id="7Sl-B4-GIl"/>
+                            <constraint firstItem="kV8-ys-55A" firstAttribute="top" secondItem="LyN-RO-ldD" secondAttribute="bottom" constant="30" id="7iG-uu-6oz"/>
                             <constraint firstItem="oOG-eL-jKY" firstAttribute="width" relation="greaterThanOrEqual" secondItem="8bC-Xf-vdC" secondAttribute="width" multiplier="0.3" id="BjU-zg-cZ2"/>
-                            <constraint firstItem="dvl-dS-rpS" firstAttribute="top" secondItem="kV8-ys-55A" secondAttribute="bottom" constant="20" id="EN4-zC-pYx"/>
+                            <constraint firstItem="LyN-RO-ldD" firstAttribute="trailing" secondItem="l2p-aK-k59" secondAttribute="trailing" constant="10" id="FPc-Sf-da6"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="Ahc-YA-giJ" secondAttribute="trailing" constant="20" id="Gf7-YQ-lub"/>
-                            <constraint firstItem="kV8-ys-55A" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="20" id="I0a-Fb-2JA"/>
                             <constraint firstItem="LyN-RO-ldD" firstAttribute="width" secondItem="8bC-Xf-vdC" secondAttribute="width" multiplier="0.769231" id="IbA-hU-O1X"/>
+                            <constraint firstItem="dvl-dS-rpS" firstAttribute="width" secondItem="8bC-Xf-vdC" secondAttribute="width" multiplier="0.5" id="IkY-1h-Nu9"/>
                             <constraint firstItem="Jg5-yy-kbO" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="45" id="NLa-Ig-YH9"/>
-                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="dvl-dS-rpS" secondAttribute="trailing" constant="20" id="OV8-mm-6W6"/>
                             <constraint firstItem="oOG-eL-jKY" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="20" id="OZy-JR-iGj"/>
                             <constraint firstItem="Jg5-yy-kbO" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="Ofq-K2-Pzi"/>
+                            <constraint firstItem="dvl-dS-rpS" firstAttribute="top" secondItem="LyN-RO-ldD" secondAttribute="bottom" constant="30" id="R4u-KR-Uxq"/>
                             <constraint firstItem="kd7-9G-tGz" firstAttribute="top" secondItem="Jg5-yy-kbO" secondAttribute="bottom" constant="18" id="ReR-2z-dcY"/>
+                            <constraint firstItem="LyN-RO-ldD" firstAttribute="bottom" secondItem="l2p-aK-k59" secondAttribute="bottom" constant="10" id="WOq-ng-Vuc"/>
+                            <constraint firstItem="l2p-aK-k59" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="gmF-Jv-NwG" secondAttribute="trailing" constant="8" symbolic="YES" id="WXs-c1-PBu"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="Cp3-x3-Ijg" secondAttribute="trailing" constant="20" id="WaH-J8-Loq"/>
                             <constraint firstItem="kd7-9G-tGz" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="YSw-DM-1tx"/>
-                            <constraint firstItem="kV8-ys-55A" firstAttribute="top" secondItem="gmF-Jv-NwG" secondAttribute="bottom" constant="70" id="Ylt-cn-dVq"/>
                             <constraint firstItem="dvl-dS-rpS" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="20" id="Ywk-iG-0uw"/>
-                            <constraint firstItem="h6j-ZU-p8i" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="bGK-gF-mya"/>
+                            <constraint firstItem="kV8-ys-55A" firstAttribute="leading" secondItem="dvl-dS-rpS" secondAttribute="trailing" constant="38" id="eOm-VD-GJb"/>
                             <constraint firstItem="Cp3-x3-Ijg" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="20" id="eP4-EP-Pne"/>
+                            <constraint firstItem="LyN-RO-ldD" firstAttribute="bottom" secondItem="gmF-Jv-NwG" secondAttribute="bottom" constant="10" id="fb0-LH-gTq"/>
                             <constraint firstItem="oOG-eL-jKY" firstAttribute="top" secondItem="dvl-dS-rpS" secondAttribute="bottom" constant="30" id="iAp-lv-NsT"/>
+                            <constraint firstItem="kV8-ys-55A" firstAttribute="width" secondItem="8bC-Xf-vdC" secondAttribute="width" multiplier="0.3" id="mbj-aV-s0j"/>
                             <constraint firstItem="qQE-QH-zml" firstAttribute="leading" secondItem="Jg5-yy-kbO" secondAttribute="trailing" constant="10" id="nWD-1C-4AO"/>
                             <constraint firstItem="qQE-QH-zml" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="4" id="nml-jH-9sr"/>
                             <constraint firstItem="Ahc-YA-giJ" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="oOG-eL-jKY" secondAttribute="trailing" constant="8" symbolic="YES" id="qQb-vB-JVG"/>
                             <constraint firstItem="LyN-RO-ldD" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="30" id="sDN-Nr-XQk"/>
                             <constraint firstItem="Ahc-YA-giJ" firstAttribute="width" relation="greaterThanOrEqual" secondItem="8bC-Xf-vdC" secondAttribute="width" multiplier="0.3" id="tNr-WS-n9h"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="qQE-QH-zml" secondAttribute="trailing" constant="45" id="wUm-Eh-Hvh"/>
-                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="kV8-ys-55A" secondAttribute="trailing" constant="20" id="wr1-G9-xGX"/>
-                            <constraint firstItem="gmF-Jv-NwG" firstAttribute="centerX" secondItem="LyN-RO-ldD" secondAttribute="centerX" id="xNr-Nr-SWi"/>
-                            <constraint firstItem="h6j-ZU-p8i" firstAttribute="top" secondItem="kd7-9G-tGz" secondAttribute="bottom" constant="20" id="yw6-di-6ms"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="kV8-ys-55A" secondAttribute="trailing" id="wr1-G9-xGX"/>
                             <constraint firstItem="Cp3-x3-Ijg" firstAttribute="top" secondItem="oOG-eL-jKY" secondAttribute="bottom" constant="30" id="zip-Z5-Xpc"/>
                         </constraints>
                     </view>
                     <connections>
                         <outlet property="btnConnect" destination="kV8-ys-55A" id="LHO-7C-O5C"/>
+                        <outlet property="btnExposureBracketMode" destination="l2p-aK-k59" id="acc-MU-Jx3"/>
                         <outlet property="btnStartCapture" destination="Cp3-x3-Ijg" id="onR-uz-mld"/>
                         <outlet property="imgCameraPreview" destination="LyN-RO-ldD" id="2Vl-Vr-6nF"/>
                         <outlet property="lblFocus" destination="qQE-QH-zml" id="u4a-Tw-BxD"/>

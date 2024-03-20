@@ -10,6 +10,7 @@ import AVFAudio
 import AVFoundation
 
 class ViewController: UIViewController ,MatterportAxisManagerDelegate ,CameraCaptureDelegate{
+    private let EXPOSURES_VALUE: [[Float]] = [[0.0], [1.0, 0.0, -1.0], [2.0, 1.0, 0.0, -1.0, -2.0], [3.0, 2.0, 1.0, 0.0, -1.0, -2.0, -3.0]]
 
     @IBOutlet weak var imgCameraPreview: UIImageView!
     @IBOutlet weak var btnConnect: UIButton!
@@ -18,6 +19,7 @@ class ViewController: UIViewController ,MatterportAxisManagerDelegate ,CameraCap
     @IBOutlet weak var lblFocus: UILabel!
     @IBOutlet weak var segCameraLenz: UISegmentedControl!
     @IBOutlet weak var sldFocus: UISlider!
+    @IBOutlet weak var btnExposureBracketMode: UIButton!
     
     
     private var mMatterportAxisManager: MatterportAxisManager!
@@ -25,6 +27,8 @@ class ViewController: UIViewController ,MatterportAxisManagerDelegate ,CameraCap
     private var isSavePhoto = false
     private var capCount = 0
     private var autoRotationAngle = 30
+    private var mExposureMode = 3
+    private var mBracketCount = 0
     
     private var mCameraCapture: CameraCapture!
     
@@ -81,7 +85,7 @@ class ViewController: UIViewController ,MatterportAxisManagerDelegate ,CameraCap
     }
     
     @IBAction func pushTestCap(_ sender: UIButton) {
-        mCameraCapture.savePhoto()
+        mCameraCapture.savePhoto(exposureValues: EXPOSURES_VALUE[mExposureMode])
     }
 
     @IBAction func pushCreateDir(_ sender: UIButton) {
@@ -159,7 +163,7 @@ class ViewController: UIViewController ,MatterportAxisManagerDelegate ,CameraCap
     
     func savePhoto() {
         isSavePhoto = true
-        mCameraCapture.savePhoto()
+        mCameraCapture.savePhoto(exposureValues: EXPOSURES_VALUE[mExposureMode])
     }
     
     
@@ -167,25 +171,29 @@ class ViewController: UIViewController ,MatterportAxisManagerDelegate ,CameraCap
         let type = CameraType(rawValue: segCameraLenz.selectedSegmentIndex) ?? .normal
         let focus = sldFocus.value
         
+        if type == .normal {
+            autoRotationAngle = 30
+        } else {
+            autoRotationAngle = 60
+        }
+        
         mCameraCapture.changeCamera(type: type, focus: focus)
     }
     
-    @IBAction func changeAutoRotationAngle(_ sender: UISegmentedControl) {
-        switch sender.selectedSegmentIndex {
-        case 0:
-            autoRotationAngle = 15
-        case 1:
-            autoRotationAngle = 30
-        case 2:
-            autoRotationAngle = 45
-        case 3:
-            autoRotationAngle = 60
+    @IBAction func changeExposureMode(_ sender: UICommand) {
+        switch sender.title {
+        case "None":
+            mExposureMode = 0
+        case "+-1 EV":
+            mExposureMode = 1
+        case "+-2 EV":
+            mExposureMode = 2
+        case "+-3 EV":
+            mExposureMode = 3
         default : break
         }
-        print("autoRotationAngle:\(autoRotationAngle)")
-        Toast.show("Change autoRotationAngle : \(autoRotationAngle)", self.view)
+        print("changeExposureMode \(mExposureMode)")
     }
-    
     
 // MARK: - MatterportAxisManagerDelegate
     func changeBtState(msg: String) {
@@ -211,13 +219,23 @@ class ViewController: UIViewController ,MatterportAxisManagerDelegate ,CameraCap
     
 // MARK: - CameraDelegate
     func onPhotoOutput(image: CIImage) {
-        mFileSaveManager.saveImage(image: image, fileName: String.init(format: "%d.jpeg", arguments: [capCount]))
+        var fileName = "\(capCount).jpeg"
+        if mExposureMode != 0 {
+            let exif = image.properties["{Exif}"] as! [String: Any]
+            let bias = exif[String(kCGImagePropertyExifExposureBiasValue)] as! Double
+            fileName = "\(capCount)_EV\(Int(round(bias))).jpeg"
+        }
+        mFileSaveManager.saveImage(image: image, fileName: fileName)
+        mBracketCount += 1
         
-        capCount += 1
-        mMatterportAxisManager.sendAngle(angle: UInt8(autoRotationAngle))
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            self.isSavePhoto = false
+        if mBracketCount >= EXPOSURES_VALUE[mExposureMode].count {
+            capCount += 1
+            mBracketCount = 0
+            mMatterportAxisManager.sendAngle(angle: UInt8(autoRotationAngle))
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                self.isSavePhoto = false
+            }
         }
     }
     
