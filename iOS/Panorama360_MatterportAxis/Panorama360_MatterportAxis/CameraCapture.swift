@@ -26,6 +26,8 @@ class CameraCapture: NSObject {
     private var INITAL_VOLUME: Float = 0.5
     private var mVolumeView: MPVolumeView!
     private var _observers = [NSKeyValueObservation]()
+    private var mBracketCaptureCount = 0
+    private var mRemainingExposureValues: [Float] = []
     
     var mCaptureSession = AVCaptureSession()
     
@@ -162,13 +164,28 @@ extension CameraCapture{
         return device.isFocusModeSupported(.autoFocus)
     }
     
-    func savePhoto() {
-        let settings = AVCapturePhotoSettings()
-        // フラッシュの設定
-        settings.flashMode = .off
+    func savePhoto(exposureValues: [Float]) {
+        mBracketCaptureCount = 0
+        mRemainingExposureValues = exposureValues
+        capturePhoto()
+    }
+    
+    // 一度に撮影できる枚数上限があるので、ブラケット撮影で上限を超える場合は小分けする
+    private func capturePhoto() {
+        let values = mRemainingExposureValues.prefix(mPhotoOutput!.maxBracketedCapturePhotoCount)
+        mBracketCaptureCount = values.count
+        mRemainingExposureValues = mRemainingExposureValues.dropFirst(mPhotoOutput!.maxBracketedCapturePhotoCount).map{ $0 }
+        let makeAutoExposureSettings = AVCaptureAutoExposureBracketedStillImageSettings.autoExposureSettings(exposureTargetBias:)
+        let exposureSettings = values.map(makeAutoExposureSettings)
+        
+        let photoSettings = AVCapturePhotoBracketSettings(rawPixelFormatType: 0,
+            processedFormat: [AVVideoCodecKey : AVVideoCodecType.jpeg],
+            bracketedSettings: exposureSettings)
+        photoSettings.isLensStabilizationEnabled = mPhotoOutput!.isLensStabilizationDuringBracketedCaptureSupported
+        photoSettings.flashMode = .off
         
         // 撮影された画像をdelegateメソッドで処理
-        self.mPhotoOutput?.capturePhoto(with: settings, delegate: self as AVCapturePhotoCaptureDelegate)
+        self.mPhotoOutput?.capturePhoto(with: photoSettings, delegate: self as AVCapturePhotoCaptureDelegate)
     }
 }
 
@@ -180,6 +197,12 @@ extension CameraCapture: AVCapturePhotoCaptureDelegate{
         if let imageData = photo.fileDataRepresentation() {
             guard let image = CIImage(data: imageData) else { return }
             mDelegate.onPhotoOutput(image: image)
+            mBracketCaptureCount -= 1
+            if mBracketCaptureCount == 0 {
+                if mRemainingExposureValues.count != 0 {
+                    capturePhoto()
+                }
+            }
         }
     }
     //無音にする
