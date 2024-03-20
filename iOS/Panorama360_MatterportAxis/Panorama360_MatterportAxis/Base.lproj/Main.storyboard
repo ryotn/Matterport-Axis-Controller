@@ -102,23 +102,6 @@
                                     <action selector="changeCamera:" destination="BYZ-38-t0r" eventType="valueChanged" id="tIt-2o-otL"/>
                                 </connections>
                             </segmentedControl>
-                            <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="1" translatesAutoresizingMaskIntoConstraints="NO" id="h6j-ZU-p8i">
-                                <rect key="frame" x="95" y="145" width="200" height="32"/>
-                                <color key="backgroundColor" white="0.66666666669999997" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <constraints>
-                                    <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="200" id="nv3-Pg-MBp"/>
-                                    <constraint firstAttribute="height" constant="31" id="vvQ-DT-vIp"/>
-                                </constraints>
-                                <segments>
-                                    <segment title="15°"/>
-                                    <segment title="30°"/>
-                                    <segment title="45°"/>
-                                    <segment title="60°"/>
-                                </segments>
-                                <connections>
-                                    <action selector="changeAutoRotationAngle:" destination="BYZ-38-t0r" eventType="valueChanged" id="Spf-Ft-UUa"/>
-                                </connections>
-                            </segmentedControl>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="kV8-ys-55A">
                                 <rect key="frame" x="253" y="507" width="117" height="35"/>
                                 <state key="normal" title="Button"/>
@@ -183,7 +166,6 @@
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="Cp3-x3-Ijg" secondAttribute="trailing" constant="20" id="WaH-J8-Loq"/>
                             <constraint firstItem="kd7-9G-tGz" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="YSw-DM-1tx"/>
                             <constraint firstItem="dvl-dS-rpS" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="20" id="Ywk-iG-0uw"/>
-                            <constraint firstItem="h6j-ZU-p8i" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="bGK-gF-mya"/>
                             <constraint firstItem="kV8-ys-55A" firstAttribute="leading" secondItem="dvl-dS-rpS" secondAttribute="trailing" constant="38" id="eOm-VD-GJb"/>
                             <constraint firstItem="Cp3-x3-Ijg" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="20" id="eP4-EP-Pne"/>
                             <constraint firstItem="LyN-RO-ldD" firstAttribute="bottom" secondItem="gmF-Jv-NwG" secondAttribute="bottom" constant="10" id="fb0-LH-gTq"/>
@@ -196,7 +178,6 @@
                             <constraint firstItem="Ahc-YA-giJ" firstAttribute="width" relation="greaterThanOrEqual" secondItem="8bC-Xf-vdC" secondAttribute="width" multiplier="0.3" id="tNr-WS-n9h"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="qQE-QH-zml" secondAttribute="trailing" constant="45" id="wUm-Eh-Hvh"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="kV8-ys-55A" secondAttribute="trailing" id="wr1-G9-xGX"/>
-                            <constraint firstItem="h6j-ZU-p8i" firstAttribute="top" secondItem="kd7-9G-tGz" secondAttribute="bottom" constant="20" id="yw6-di-6ms"/>
                             <constraint firstItem="Cp3-x3-Ijg" firstAttribute="top" secondItem="oOG-eL-jKY" secondAttribute="bottom" constant="30" id="zip-Z5-Xpc"/>
                         </constraints>
                     </view>

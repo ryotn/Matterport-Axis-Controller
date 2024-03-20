@@ -171,6 +171,12 @@ class ViewController: UIViewController ,MatterportAxisManagerDelegate ,CameraCap
         let type = CameraType(rawValue: segCameraLenz.selectedSegmentIndex) ?? .normal
         let focus = sldFocus.value
         
+        if type == .normal {
+            autoRotationAngle = 30
+        } else {
+            autoRotationAngle = 60
+        }
+        
         mCameraCapture.changeCamera(type: type, focus: focus)
     }
     
@@ -188,23 +194,6 @@ class ViewController: UIViewController ,MatterportAxisManagerDelegate ,CameraCap
         }
         print("changeExposureMode \(mExposureMode)")
     }
-    
-    @IBAction func changeAutoRotationAngle(_ sender: UISegmentedControl) {
-        switch sender.selectedSegmentIndex {
-        case 0:
-            autoRotationAngle = 15
-        case 1:
-            autoRotationAngle = 30
-        case 2:
-            autoRotationAngle = 45
-        case 3:
-            autoRotationAngle = 60
-        default : break
-        }
-        print("autoRotationAngle:\(autoRotationAngle)")
-        Toast.show("Change autoRotationAngle : \(autoRotationAngle)", self.view)
-    }
-    
     
 // MARK: - MatterportAxisManagerDelegate
     func changeBtState(msg: String) {
