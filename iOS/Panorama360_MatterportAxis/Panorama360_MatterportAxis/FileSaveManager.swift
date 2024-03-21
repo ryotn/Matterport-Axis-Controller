@@ -50,15 +50,16 @@ class FileSaveManager: NSObject {
     }
     
     func saveImage(image: CIImage, fileName: String) {
-        
         guard let imageData = CIContext()
             .jpegRepresentation(of: image,
                                 colorSpace: image.colorSpace ?? CGColorSpaceCreateDeviceRGB())
         else {
+            print("Failed to jpegRepresentation")
             return
         }
         
         guard let dirPath = mSavePath else {
+            print("mSavePath is null")
             return
         }
         
@@ -66,7 +67,7 @@ class FileSaveManager: NSObject {
 
         do {
             try imageData.write(to: path)
-            print("Image saved.")
+            print("Image saved. filename : \(fileName)")
         } catch {
             print("Failed to save the image:", error)
         }
