@@ -58,7 +58,11 @@ class ViewController: UIViewController ,MatterportAxisManagerDelegate ,CameraCap
                 print("Sound Loading error")
             }
         }
-        // Do any additional setup after loading the view.
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        mCameraCapture.setInitalVolume()
     }
 
     @IBAction func pushConnect(_ sender: UIButton) {

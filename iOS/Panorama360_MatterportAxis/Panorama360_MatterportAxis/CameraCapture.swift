@@ -226,43 +226,40 @@ extension CameraCapture {
         let audioSession = AVAudioSession.sharedInstance()
         do {
             try audioSession.setActive(true)
-            setVolume(INITAL_VOLUME)
-            // 出力音量の監視を開始
-            _observers.append(audioSession.observe(\.outputVolume, options: .new) {_, _ in
-                self.changedVolume()
-            })
         } catch {
-            print("Could not observer outputVolume ", error)
+            print("setActive failed ", error)
         }
     }
     
     func stopListeningVolume() {
-        // 出力音量の監視を終了
         _observers.removeAll()
-        // ボリュームビューを破棄
         mVolumeView.removeFromSuperview()
         mVolumeView = nil
     }
     
-    func setVolume(_ volume: Float) {
+    func setInitalVolume() {
+        _observers.removeAll()
+
         for view : UIView in mVolumeView.subviews {
             if(NSStringFromClass( view.classForCoder ) == "MPVolumeSlider" ){
                 let sldVolume = view as! UISlider
-                sldVolume.setValue(volume, animated: false)
+                sldVolume.setValue(INITAL_VOLUME, animated: false)
                 break
             }
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            // your code here
+            self._observers.append(AVAudioSession.sharedInstance().observe(\.outputVolume, options: .new) {_, change in
+                self.changedVolume()
+            })
         }
     }
     
     func changedVolume() {
         print("シャッターボタン")
         mDelegate.pushRemoteShutterButton()
-        // 一旦出力音量の監視をやめて出力音量を設定してから出力音量の監視を再開する
-        _observers.removeAll()
-        setVolume(INITAL_VOLUME)
-        _observers.append(AVAudioSession.sharedInstance().observe(\.outputVolume, options: .new) {_, change in
-            print("changevolume?")
-            self.changedVolume()
-        })
+        
+        setInitalVolume()
     }
 }
