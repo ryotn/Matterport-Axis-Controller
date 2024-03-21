@@ -13,7 +13,7 @@ import AVFoundation
 import MediaPlayer
 
 protocol CameraCaptureDelegate {
-    func onPhotoOutput(image: CIImage)
+    func onSuccessCapturePhoto()
     func pushRemoteShutterButton()
 }
 
@@ -23,11 +23,16 @@ enum CameraType: Int {
 }
 
 class CameraCapture: NSObject {
+    private let EXPOSURES_VALUE: [[Float]] = [[0.0], [1.0, 0.0, -1.0], [2.0, 1.0, 0.0, -1.0, -2.0], [3.0, 2.0, 1.0, 0.0, -1.0, -2.0, -3.0]]
     private var INITAL_VOLUME: Float = 0.5
     private var mVolumeView: MPVolumeView!
     private var _observers = [NSKeyValueObservation]()
     private var mBracketCaptureCount = 0
     private var mRemainingExposureValues: [Float] = []
+    private var mFileSaveManager: FileSaveManager!
+    private var mCapCount = 0
+    private var mExposureMode = 3
+    private var mSaveImages = [CIImage]()
     
     var mCaptureSession = AVCaptureSession()
     
@@ -46,6 +51,8 @@ class CameraCapture: NSObject {
         self.mPreviewView = view
         self.mDelegate = delegate
         super.init()
+        
+        mFileSaveManager = FileSaveManager()
         
         setupCaptureSession()
         setupDevice()
@@ -164,9 +171,9 @@ extension CameraCapture{
         return device.isFocusModeSupported(.autoFocus)
     }
     
-    func savePhoto(exposureValues: [Float]) {
+    func startCapture() {
         mBracketCaptureCount = 0
-        mRemainingExposureValues = exposureValues
+        mRemainingExposureValues = EXPOSURES_VALUE[mExposureMode]
         capturePhoto()
     }
     
@@ -187,6 +194,15 @@ extension CameraCapture{
         // 撮影された画像をdelegateメソッドで処理
         self.mPhotoOutput?.capturePhoto(with: photoSettings, delegate: self as AVCapturePhotoCaptureDelegate)
     }
+    
+    func createDir() -> Bool {
+        mCapCount = 0
+        return mFileSaveManager.reCreateDir()
+    }
+    
+    func setExposureMode(mode: Int) {
+        mExposureMode = mode
+    }
 }
 
 
@@ -195,12 +211,26 @@ extension CameraCapture: AVCapturePhotoCaptureDelegate{
     // 撮影した画像データが生成されたときに呼び出されるデリゲートメソッド
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         if let imageData = photo.fileDataRepresentation() {
-            guard let image = CIImage(data: imageData) else { return }
-            mDelegate.onPhotoOutput(image: image)
+            guard let image = CIImage(data: imageData) else {
+                print("Failed to convert imageData to CIImage")
+                return
+            }
+            mSaveImages.append(image)
             mBracketCaptureCount -= 1
             if mBracketCaptureCount == 0 {
                 if mRemainingExposureValues.count != 0 {
                     capturePhoto()
+                } else {
+                    mSaveImages.enumerated().forEach { index, image in
+                        var fileName = "\(mCapCount).jpeg"
+                        if mExposureMode != 0 {
+                            fileName = "\(mCapCount)_\(index).jpeg"
+                        }
+                        mFileSaveManager.saveImage(image: image, fileName: fileName)
+                    }
+                    mSaveImages.removeAll()
+                    mCapCount += 1
+                    mDelegate.onSuccessCapturePhoto()
                 }
             }
         }

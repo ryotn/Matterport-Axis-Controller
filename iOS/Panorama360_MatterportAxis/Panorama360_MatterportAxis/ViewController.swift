@@ -10,8 +10,6 @@ import AVFAudio
 import AVFoundation
 
 class ViewController: UIViewController ,MatterportAxisManagerDelegate ,CameraCaptureDelegate{
-    private let EXPOSURES_VALUE: [[Float]] = [[0.0], [1.0, 0.0, -1.0], [2.0, 1.0, 0.0, -1.0, -2.0], [3.0, 2.0, 1.0, 0.0, -1.0, -2.0, -3.0]]
-
     @IBOutlet weak var imgCameraPreview: UIImageView!
     @IBOutlet weak var btnConnect: UIButton!
     @IBOutlet weak var btnStartCapture: UIButton!
@@ -21,18 +19,12 @@ class ViewController: UIViewController ,MatterportAxisManagerDelegate ,CameraCap
     @IBOutlet weak var sldFocus: UISlider!
     @IBOutlet weak var btnExposureBracketMode: UIButton!
     
-    
     private var mMatterportAxisManager: MatterportAxisManager!
     private var mAutoRotationFlg = false
     private var isSavePhoto = false
-    private var capCount = 0
     private var autoRotationAngle = 30
-    private var mExposureMode = 3
-    private var mBracketCount = 0
     
     private var mCameraCapture: CameraCapture!
-    
-    private var mFileSaveManager: FileSaveManager!
     
     private var mStartSound: AVAudioPlayer!
     private var mCompSound: AVAudioPlayer!
@@ -42,7 +34,6 @@ class ViewController: UIViewController ,MatterportAxisManagerDelegate ,CameraCap
         mMatterportAxisManager = MatterportAxisManager(delegate: self)
         mCameraCapture = CameraCapture(view: imgCameraPreview,delegate: self)
         mCameraCapture.startListeningVolumeButton(view: self.view)
-        mFileSaveManager = FileSaveManager()
         UIApplication.shared.isIdleTimerDisabled = true
         if let soundStartURL = Bundle.main.url(forResource: "start", withExtension: "mp3") {
             do {
@@ -89,12 +80,11 @@ class ViewController: UIViewController ,MatterportAxisManagerDelegate ,CameraCap
     }
     
     @IBAction func pushTestCap(_ sender: UIButton) {
-        mCameraCapture.savePhoto(exposureValues: EXPOSURES_VALUE[mExposureMode])
+        mCameraCapture.startCapture()
     }
 
     @IBAction func pushCreateDir(_ sender: UIButton) {
-        capCount = 0
-        let result = mFileSaveManager.reCreateDir()
+        let result = mCameraCapture.createDir()
         if result {
             Toast.show("Successfully created directory", self.view)
         } else {
@@ -167,7 +157,7 @@ class ViewController: UIViewController ,MatterportAxisManagerDelegate ,CameraCap
     
     func savePhoto() {
         isSavePhoto = true
-        mCameraCapture.savePhoto(exposureValues: EXPOSURES_VALUE[mExposureMode])
+        mCameraCapture.startCapture()
     }
     
     
@@ -185,18 +175,20 @@ class ViewController: UIViewController ,MatterportAxisManagerDelegate ,CameraCap
     }
     
     @IBAction func changeExposureMode(_ sender: UICommand) {
+        var mode = 0
         switch sender.title {
         case "None":
-            mExposureMode = 0
+            mode = 0
         case "+-1 EV":
-            mExposureMode = 1
+            mode = 1
         case "+-2 EV":
-            mExposureMode = 2
+            mode = 2
         case "+-3 EV":
-            mExposureMode = 3
+            mode = 3
         default : break
         }
-        print("changeExposureMode \(mExposureMode)")
+        mCameraCapture.setExposureMode(mode: mode)
+        print("changeExposureMode \(mode)")
     }
     
 // MARK: - MatterportAxisManagerDelegate
@@ -222,24 +214,10 @@ class ViewController: UIViewController ,MatterportAxisManagerDelegate ,CameraCap
     }
     
 // MARK: - CameraDelegate
-    func onPhotoOutput(image: CIImage) {
-        var fileName = "\(capCount).jpeg"
-        if mExposureMode != 0 {
-            let exif = image.properties["{Exif}"] as! [String: Any]
-            let bias = exif[String(kCGImagePropertyExifExposureBiasValue)] as! Double
-            fileName = "\(capCount)_EV\(Int(round(bias))).jpeg"
-        }
-        mFileSaveManager.saveImage(image: image, fileName: fileName)
-        mBracketCount += 1
-        
-        if mBracketCount >= EXPOSURES_VALUE[mExposureMode].count {
-            capCount += 1
-            mBracketCount = 0
-            mMatterportAxisManager.sendAngle(angle: UInt8(autoRotationAngle))
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                self.isSavePhoto = false
-            }
+    func onSuccessCapturePhoto() {
+        mMatterportAxisManager.sendAngle(angle: UInt8(autoRotationAngle))
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            self.isSavePhoto = false
         }
     }
     
