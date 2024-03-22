@@ -16,7 +16,6 @@
 		2F4A97572954776A0038FD77 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F4A97562954776A0038FD77 /* ViewController.swift */; };
 		2F4A975A2954776A0038FD77 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2F4A97582954776A0038FD77 /* Main.storyboard */; };
 		2F4A975C2954776C0038FD77 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2F4A975B2954776C0038FD77 /* Assets.xcassets */; };
-		2F4A975F2954776C0038FD77 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2F4A975D2954776C0038FD77 /* LaunchScreen.storyboard */; };
 		2F4A976B295485860038FD77 /* MatterportAxisManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F4A976A295485860038FD77 /* MatterportAxisManager.swift */; };
 		2F4A976D295EBA880038FD77 /* CameraCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F4A976C295EBA880038FD77 /* CameraCapture.swift */; };
 		2F4A976F295ECB7D0038FD77 /* FileSaveManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F4A976E295ECB7D0038FD77 /* FileSaveManager.swift */; };
@@ -34,7 +33,6 @@
 		2F4A97562954776A0038FD77 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		2F4A97592954776A0038FD77 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		2F4A975B2954776C0038FD77 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		2F4A975E2954776C0038FD77 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		2F4A97602954776C0038FD77 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2F4A976A295485860038FD77 /* MatterportAxisManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MatterportAxisManager.swift; sourceTree = "<group>"; };
 		2F4A976C295EBA880038FD77 /* CameraCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraCapture.swift; sourceTree = "<group>"; };
@@ -92,7 +90,6 @@
 				2F4A97562954776A0038FD77 /* ViewController.swift */,
 				2F4A97582954776A0038FD77 /* Main.storyboard */,
 				2F4A975B2954776C0038FD77 /* Assets.xcassets */,
-				2F4A975D2954776C0038FD77 /* LaunchScreen.storyboard */,
 				2F4A97602954776C0038FD77 /* Info.plist */,
 				2F62050D295F02CE000455C4 /* Toast.swift */,
 			);
@@ -157,7 +154,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2F4A975F2954776C0038FD77 /* LaunchScreen.storyboard in Resources */,
 				2F478A5729FE2CE700D04C34 /* comp.mp3 in Resources */,
 				2F478A5629FE2CE700D04C34 /* start.mp3 in Resources */,
 				2F4A975C2954776C0038FD77 /* Assets.xcassets in Resources */,
@@ -193,14 +189,6 @@
 				2F4A97592954776A0038FD77 /* Base */,
 			);
 			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
-		2F4A975D2954776C0038FD77 /* LaunchScreen.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				2F4A975E2954776C0038FD77 /* Base */,
-			);
-			name = LaunchScreen.storyboard;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -335,8 +323,6 @@
 				INFOPLIST_KEY_NSCameraUsageDescription = "カメラを使います";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "写真を保存します";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -367,8 +353,6 @@
 				INFOPLIST_KEY_NSCameraUsageDescription = "カメラを使います";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "写真を保存します";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
