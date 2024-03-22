@@ -33,7 +33,7 @@ class ViewController: UIViewController ,MatterportAxisManagerDelegate ,CameraCap
         super.viewDidLoad()
         mMatterportAxisManager = MatterportAxisManager(delegate: self)
         mCameraCapture = CameraCapture(view: imgCameraPreview,delegate: self)
-        mCameraCapture.startListeningVolumeButton(view: self.view)
+        mCameraCapture.startListeningVolumeButton()
         UIApplication.shared.isIdleTimerDisabled = true
         if let soundStartURL = Bundle.main.url(forResource: "start", withExtension: "mp3") {
             do {
@@ -49,11 +49,14 @@ class ViewController: UIViewController ,MatterportAxisManagerDelegate ,CameraCap
                 print("Sound Loading error")
             }
         }
-    }
-    
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        mCameraCapture.setInitalVolume()
+
+        NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { notify in
+            self.mCameraCapture.setInitalVolume()
+        }
+        
+        NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { notify in
+            self.mCameraCapture.stopListeningVolume()
+        }
     }
 
     @IBAction func pushConnect(_ sender: UIButton) {
