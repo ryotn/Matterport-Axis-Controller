@@ -26,7 +26,9 @@ class CameraCapture: NSObject {
     private let EXPOSURES_VALUE: [[Float]] = [[0.0], [1.0, 0.0, -1.0], [2.0, 1.0, 0.0, -1.0, -2.0], [3.0, 2.0, 1.0, 0.0, -1.0, -2.0, -3.0]]
     private var INITAL_VOLUME: Float = 0.5
     private var mVolumeView: MPVolumeView!
-    private var _observers = [NSKeyValueObservation]()
+    private var mVolumeSlider: UISlider!
+    private var mVolumeObservTimer: Timer?
+    private var mOutputVolumeObservers = [NSKeyValueObservation]()
     private var mBracketCaptureCount = 0
     private var mRemainingExposureValues: [Float] = []
     private var mFileSaveManager: FileSaveManager!
@@ -246,44 +248,50 @@ extension CameraCapture: AVCapturePhotoCaptureDelegate{
 //https://gist.github.com/kazz12211/9d58af5c42ecbe35de58d66418412690
 extension CameraCapture {
     
-    func startListeningVolumeButton(view: UIView) {
-        // MPVolumeViewを画面の外側に追い出して見えないようにする
+    func startListeningVolumeButton() {
         let frame = CGRect(x: -100, y: -100, width: 100, height: 100)
         mVolumeView = MPVolumeView(frame: frame)
-        mVolumeView.sizeToFit()
         mPreviewView.addSubview(mVolumeView)
-
-        let audioSession = AVAudioSession.sharedInstance()
-        do {
-            try audioSession.setActive(true)
-        } catch {
-            print("setActive failed ", error)
-        }
-    }
-    
-    func stopListeningVolume() {
-        _observers.removeAll()
-        mVolumeView.removeFromSuperview()
-        mVolumeView = nil
-    }
-    
-    func setInitalVolume() {
-        _observers.removeAll()
 
         for view : UIView in mVolumeView.subviews {
             if(NSStringFromClass( view.classForCoder ) == "MPVolumeSlider" ){
-                let sldVolume = view as! UISlider
-                sldVolume.setValue(INITAL_VOLUME, animated: false)
+                let volume = view as! UISlider
+                mVolumeSlider = volume
                 break
             }
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            // your code here
-            self._observers.append(AVAudioSession.sharedInstance().observe(\.outputVolume, options: .new) {_, change in
+    }
+    
+    func startListeningVolume() {
+        setAudioSessionActive(active: true)
+        mVolumeObservTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true, block: { [self] _ in
+            let outputVolume = AVAudioSession.sharedInstance().outputVolume
+            if outputVolume.truncatingRemainder(dividingBy: 1) == 0 {
+                setInitalVolume()
+                print("resetValume")
+            }
+        })
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [self] in
+            mOutputVolumeObservers.append(AVAudioSession.sharedInstance().observe(\.outputVolume, options: .new) {_, change in
                 self.changedVolume()
             })
         }
+        
+    }
+    
+    func stopListeningVolume() {
+        mVolumeObservTimer?.invalidate()
+        mVolumeObservTimer = nil
+        mOutputVolumeObservers.removeAll()
+        setAudioSessionActive(active: false)
+    }
+    
+    func setInitalVolume() {
+        stopListeningVolume()
+        mOutputVolumeObservers.removeAll()
+        mVolumeSlider.setValue(INITAL_VOLUME, animated: false)
+        startListeningVolume()
     }
     
     func changedVolume() {
@@ -291,5 +299,13 @@ extension CameraCapture {
         mDelegate.pushRemoteShutterButton()
         
         setInitalVolume()
+    }
+    
+    private func setAudioSessionActive(active: Bool) {
+        do {
+            try AVAudioSession.sharedInstance().setActive(active)
+        } catch {
+            print("setActive failed ", error)
+        }
     }
 }
