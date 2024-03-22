@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2F293B0E2BADC8ED00748B91 /* Panorama360App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F293B0D2BADC8ED00748B91 /* Panorama360App.swift */; };
+		2F293B102BADC93700748B91 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F293B0F2BADC93700748B91 /* ContentView.swift */; };
 		2F478A5629FE2CE700D04C34 /* start.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 2F478A5429FE2CE700D04C34 /* start.mp3 */; };
 		2F478A5729FE2CE700D04C34 /* comp.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 2F478A5529FE2CE700D04C34 /* comp.mp3 */; };
 		2F4A97532954776A0038FD77 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F4A97522954776A0038FD77 /* AppDelegate.swift */; };
@@ -22,6 +24,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2F293B0D2BADC8ED00748B91 /* Panorama360App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Panorama360App.swift; sourceTree = "<group>"; };
+		2F293B0F2BADC93700748B91 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		2F478A5429FE2CE700D04C34 /* start.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = start.mp3; sourceTree = "<group>"; };
 		2F478A5529FE2CE700D04C34 /* comp.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = comp.mp3; sourceTree = "<group>"; };
 		2F4A974F2954776A0038FD77 /* Panorama360_MatterportAxis.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Panorama360_MatterportAxis.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -78,6 +82,8 @@
 			isa = PBXGroup;
 			children = (
 				2F478A5329FE2CE700D04C34 /* sound */,
+				2F293B0D2BADC8ED00748B91 /* Panorama360App.swift */,
+				2F293B0F2BADC93700748B91 /* ContentView.swift */,
 				2F4A976A295485860038FD77 /* MatterportAxisManager.swift */,
 				2F4A976E295ECB7D0038FD77 /* FileSaveManager.swift */,
 				2F4A976C295EBA880038FD77 /* CameraCapture.swift */,
@@ -166,10 +172,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2F293B0E2BADC8ED00748B91 /* Panorama360App.swift in Sources */,
 				2F4A976F295ECB7D0038FD77 /* FileSaveManager.swift in Sources */,
 				2F4A976B295485860038FD77 /* MatterportAxisManager.swift in Sources */,
 				2F4A97572954776A0038FD77 /* ViewController.swift in Sources */,
 				2F4A97532954776A0038FD77 /* AppDelegate.swift in Sources */,
+				2F293B102BADC93700748B91 /* ContentView.swift in Sources */,
 				2F4A976D295EBA880038FD77 /* CameraCapture.swift in Sources */,
 				2F4A97552954776A0038FD77 /* SceneDelegate.swift in Sources */,
 				2F62050E295F02CE000455C4 /* Toast.swift in Sources */,
