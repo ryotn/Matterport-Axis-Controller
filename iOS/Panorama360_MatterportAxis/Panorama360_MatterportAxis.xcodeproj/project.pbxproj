@@ -13,13 +13,10 @@
 		2F478A5729FE2CE700D04C34 /* comp.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 2F478A5529FE2CE700D04C34 /* comp.mp3 */; };
 		2F4A97532954776A0038FD77 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F4A97522954776A0038FD77 /* AppDelegate.swift */; };
 		2F4A97552954776A0038FD77 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F4A97542954776A0038FD77 /* SceneDelegate.swift */; };
-		2F4A97572954776A0038FD77 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F4A97562954776A0038FD77 /* ViewController.swift */; };
-		2F4A975A2954776A0038FD77 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2F4A97582954776A0038FD77 /* Main.storyboard */; };
 		2F4A975C2954776C0038FD77 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2F4A975B2954776C0038FD77 /* Assets.xcassets */; };
 		2F4A976B295485860038FD77 /* MatterportAxisManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F4A976A295485860038FD77 /* MatterportAxisManager.swift */; };
 		2F4A976D295EBA880038FD77 /* CameraCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F4A976C295EBA880038FD77 /* CameraCapture.swift */; };
 		2F4A976F295ECB7D0038FD77 /* FileSaveManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F4A976E295ECB7D0038FD77 /* FileSaveManager.swift */; };
-		2F62050E295F02CE000455C4 /* Toast.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F62050D295F02CE000455C4 /* Toast.swift */; };
 		2FBA53EC2BADCEFC0068A863 /* ContentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FBA53EB2BADCEFC0068A863 /* ContentViewModel.swift */; };
 		2FBA53EE2BADD2B00068A863 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FBA53ED2BADD2B00068A863 /* CameraView.swift */; };
 		2FBA53F02BAEF33A0068A863 /* SettingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FBA53EF2BAEF33A0068A863 /* SettingView.swift */; };
@@ -35,14 +32,11 @@
 		2F4A974F2954776A0038FD77 /* Panorama360_MatterportAxis.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Panorama360_MatterportAxis.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2F4A97522954776A0038FD77 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		2F4A97542954776A0038FD77 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
-		2F4A97562954776A0038FD77 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
-		2F4A97592954776A0038FD77 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		2F4A975B2954776C0038FD77 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2F4A97602954776C0038FD77 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2F4A976A295485860038FD77 /* MatterportAxisManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MatterportAxisManager.swift; sourceTree = "<group>"; };
 		2F4A976C295EBA880038FD77 /* CameraCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraCapture.swift; sourceTree = "<group>"; };
 		2F4A976E295ECB7D0038FD77 /* FileSaveManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSaveManager.swift; sourceTree = "<group>"; };
-		2F62050D295F02CE000455C4 /* Toast.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Toast.swift; sourceTree = "<group>"; };
 		2FBA53EB2BADCEFC0068A863 /* ContentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewModel.swift; sourceTree = "<group>"; };
 		2FBA53ED2BADD2B00068A863 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
 		2FBA53EF2BAEF33A0068A863 /* SettingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingView.swift; sourceTree = "<group>"; };
@@ -118,11 +112,8 @@
 				2F4A976C295EBA880038FD77 /* CameraCapture.swift */,
 				2F4A97522954776A0038FD77 /* AppDelegate.swift */,
 				2F4A97542954776A0038FD77 /* SceneDelegate.swift */,
-				2F4A97562954776A0038FD77 /* ViewController.swift */,
-				2F4A97582954776A0038FD77 /* Main.storyboard */,
 				2F4A975B2954776C0038FD77 /* Assets.xcassets */,
 				2F4A97602954776C0038FD77 /* Info.plist */,
-				2F62050D295F02CE000455C4 /* Toast.swift */,
 			);
 			path = Panorama360_MatterportAxis;
 			sourceTree = "<group>";
@@ -192,7 +183,6 @@
 				2F478A5729FE2CE700D04C34 /* comp.mp3 in Resources */,
 				2F478A5629FE2CE700D04C34 /* start.mp3 in Resources */,
 				2F4A975C2954776C0038FD77 /* Assets.xcassets in Resources */,
-				2F4A975A2954776A0038FD77 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -207,7 +197,6 @@
 				2F293B0E2BADC8ED00748B91 /* Panorama360App.swift in Sources */,
 				2F4A976F295ECB7D0038FD77 /* FileSaveManager.swift in Sources */,
 				2F4A976B295485860038FD77 /* MatterportAxisManager.swift in Sources */,
-				2F4A97572954776A0038FD77 /* ViewController.swift in Sources */,
 				2FBA53EC2BADCEFC0068A863 /* ContentViewModel.swift in Sources */,
 				2F4A97532954776A0038FD77 /* AppDelegate.swift in Sources */,
 				2F293B102BADC93700748B91 /* ContentView.swift in Sources */,
@@ -216,22 +205,10 @@
 				2F4A976D295EBA880038FD77 /* CameraCapture.swift in Sources */,
 				2FBA53F02BAEF33A0068A863 /* SettingView.swift in Sources */,
 				2F4A97552954776A0038FD77 /* SceneDelegate.swift in Sources */,
-				2F62050E295F02CE000455C4 /* Toast.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXVariantGroup section */
-		2F4A97582954776A0038FD77 /* Main.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				2F4A97592954776A0038FD77 /* Base */,
-			);
-			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
-/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		2F4A97612954776C0038FD77 /* Debug */ = {
