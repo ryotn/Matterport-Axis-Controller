@@ -20,6 +20,11 @@
 		2F4A976D295EBA880038FD77 /* CameraCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F4A976C295EBA880038FD77 /* CameraCapture.swift */; };
 		2F4A976F295ECB7D0038FD77 /* FileSaveManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F4A976E295ECB7D0038FD77 /* FileSaveManager.swift */; };
 		2F62050E295F02CE000455C4 /* Toast.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F62050D295F02CE000455C4 /* Toast.swift */; };
+		2FBA53EC2BADCEFC0068A863 /* ContentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FBA53EB2BADCEFC0068A863 /* ContentViewModel.swift */; };
+		2FBA53EE2BADD2B00068A863 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FBA53ED2BADD2B00068A863 /* CameraView.swift */; };
+		2FBA53F02BAEF33A0068A863 /* SettingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FBA53EF2BAEF33A0068A863 /* SettingView.swift */; };
+		2FBA53F22BAF00E00068A863 /* ToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FBA53F12BAF00E00068A863 /* ToastView.swift */; };
+		2FBA53F42BAF11300068A863 /* PreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FBA53F32BAF11300068A863 /* PreviewView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,6 +43,11 @@
 		2F4A976C295EBA880038FD77 /* CameraCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraCapture.swift; sourceTree = "<group>"; };
 		2F4A976E295ECB7D0038FD77 /* FileSaveManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSaveManager.swift; sourceTree = "<group>"; };
 		2F62050D295F02CE000455C4 /* Toast.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Toast.swift; sourceTree = "<group>"; };
+		2FBA53EB2BADCEFC0068A863 /* ContentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewModel.swift; sourceTree = "<group>"; };
+		2FBA53ED2BADD2B00068A863 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
+		2FBA53EF2BAEF33A0068A863 /* SettingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingView.swift; sourceTree = "<group>"; };
+		2FBA53F12BAF00E00068A863 /* ToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastView.swift; sourceTree = "<group>"; };
+		2FBA53F32BAF11300068A863 /* PreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -51,6 +61,26 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		2F293B112BADCE4800748B91 /* model */ = {
+			isa = PBXGroup;
+			children = (
+				2FBA53EB2BADCEFC0068A863 /* ContentViewModel.swift */,
+			);
+			path = model;
+			sourceTree = "<group>";
+		};
+		2F293B122BADCE5300748B91 /* view */ = {
+			isa = PBXGroup;
+			children = (
+				2F293B0F2BADC93700748B91 /* ContentView.swift */,
+				2FBA53ED2BADD2B00068A863 /* CameraView.swift */,
+				2FBA53EF2BAEF33A0068A863 /* SettingView.swift */,
+				2FBA53F12BAF00E00068A863 /* ToastView.swift */,
+				2FBA53F32BAF11300068A863 /* PreviewView.swift */,
+			);
+			path = view;
+			sourceTree = "<group>";
+		};
 		2F478A5329FE2CE700D04C34 /* sound */ = {
 			isa = PBXGroup;
 			children = (
@@ -79,9 +109,10 @@
 		2F4A97512954776A0038FD77 /* Panorama360_MatterportAxis */ = {
 			isa = PBXGroup;
 			children = (
+				2F293B122BADCE5300748B91 /* view */,
+				2F293B112BADCE4800748B91 /* model */,
 				2F478A5329FE2CE700D04C34 /* sound */,
 				2F293B0D2BADC8ED00748B91 /* Panorama360App.swift */,
-				2F293B0F2BADC93700748B91 /* ContentView.swift */,
 				2F4A976A295485860038FD77 /* MatterportAxisManager.swift */,
 				2F4A976E295ECB7D0038FD77 /* FileSaveManager.swift */,
 				2F4A976C295EBA880038FD77 /* CameraCapture.swift */,
@@ -112,6 +143,8 @@
 			dependencies = (
 			);
 			name = Panorama360_MatterportAxis;
+			packageProductDependencies = (
+			);
 			productName = Panorama360_MatterportAxis;
 			productReference = 2F4A974F2954776A0038FD77 /* Panorama360_MatterportAxis.app */;
 			productType = "com.apple.product-type.application";
@@ -140,6 +173,8 @@
 				Base,
 			);
 			mainGroup = 2F4A97462954776A0038FD77;
+			packageReferences = (
+			);
 			productRefGroup = 2F4A97502954776A0038FD77 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -168,13 +203,18 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2FBA53F22BAF00E00068A863 /* ToastView.swift in Sources */,
 				2F293B0E2BADC8ED00748B91 /* Panorama360App.swift in Sources */,
 				2F4A976F295ECB7D0038FD77 /* FileSaveManager.swift in Sources */,
 				2F4A976B295485860038FD77 /* MatterportAxisManager.swift in Sources */,
 				2F4A97572954776A0038FD77 /* ViewController.swift in Sources */,
+				2FBA53EC2BADCEFC0068A863 /* ContentViewModel.swift in Sources */,
 				2F4A97532954776A0038FD77 /* AppDelegate.swift in Sources */,
 				2F293B102BADC93700748B91 /* ContentView.swift in Sources */,
+				2FBA53EE2BADD2B00068A863 /* CameraView.swift in Sources */,
+				2FBA53F42BAF11300068A863 /* PreviewView.swift in Sources */,
 				2F4A976D295EBA880038FD77 /* CameraCapture.swift in Sources */,
+				2FBA53F02BAEF33A0068A863 /* SettingView.swift in Sources */,
 				2F4A97552954776A0038FD77 /* SceneDelegate.swift in Sources */,
 				2F62050E295F02CE000455C4 /* Toast.swift in Sources */,
 			);
