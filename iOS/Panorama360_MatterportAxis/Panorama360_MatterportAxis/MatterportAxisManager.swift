@@ -88,6 +88,7 @@ class MatterportAxisManager: NSObject, CBCentralManagerDelegate, CBPeripheralDel
 //MARK: - CBCentralManagerDelegate
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         var msg = "Bluetooth Unknown Error"
+        mBtStatus = false
         switch central.state {
             case CBManagerState.poweredOn:
                 print("Bluetooth PoweredON")

@@ -46,10 +46,10 @@ class CameraCapture: NSObject {
     var mPhotoOutput : AVCapturePhotoOutput?
     
     var mPreviewLayer : AVCaptureVideoPreviewLayer?
-    var mPreviewView : UIView
+    var mPreviewView : PreviewView
     var mDelegate: CameraCaptureDelegate!
     
-    init(view : UIView, delegate : CameraCaptureDelegate){
+    init(view : PreviewView, delegate : CameraCaptureDelegate){
         self.mPreviewView = view
         self.mDelegate = delegate
         super.init()
@@ -135,6 +135,7 @@ extension CameraCapture{
 
     // カメラのプレビューを表示するレイヤの設定
     func setupPreviewLayer() {
+        /*
         // 指定したAVCaptureSessionでプレビューレイヤを初期化
         self.mPreviewLayer = AVCaptureVideoPreviewLayer(session: mCaptureSession)
         // プレビューレイヤが、カメラのキャプチャーを縦横比を維持した状態で、表示するように設定
@@ -143,7 +144,9 @@ extension CameraCapture{
         self.mPreviewLayer?.connection?.videoOrientation = AVCaptureVideoOrientation.portrait
 
         self.mPreviewLayer?.frame = CGRect(x: 0, y: 0, width: mPreviewView.frame.width, height: mPreviewView.frame.height)
-        self.mPreviewView.layer.insertSublayer(self.mPreviewLayer!, at: 0)
+        self.mPreviewView.layer.insertSublayer(self.mPreviewLayer!, at: 0)*/
+        mPreviewView.videoPreviewLayer.session = mCaptureSession
+        mPreviewView.videoPreviewLayer.videoGravity = AVLayerVideoGravity.resizeAspectFill
     }
     
     func setFocus(position: Float) {
@@ -248,7 +251,7 @@ extension CameraCapture: AVCapturePhotoCaptureDelegate{
 //https://gist.github.com/kazz12211/9d58af5c42ecbe35de58d66418412690
 extension CameraCapture {
     
-    func startListeningVolumeButton() {
+    func initVolumeView() {
         let frame = CGRect(x: -100, y: -100, width: 100, height: 100)
         mVolumeView = MPVolumeView(frame: frame)
         mPreviewView.addSubview(mVolumeView)
