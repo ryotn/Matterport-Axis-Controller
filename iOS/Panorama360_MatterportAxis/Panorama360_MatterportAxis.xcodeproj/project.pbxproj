@@ -17,6 +17,7 @@
 		2F4A976B295485860038FD77 /* MatterportAxisManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F4A976A295485860038FD77 /* MatterportAxisManager.swift */; };
 		2F4A976D295EBA880038FD77 /* CameraCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F4A976C295EBA880038FD77 /* CameraCapture.swift */; };
 		2F4A976F295ECB7D0038FD77 /* FileSaveManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F4A976E295ECB7D0038FD77 /* FileSaveManager.swift */; };
+		2F68CA002BB0338A00108259 /* SwiftLintFramework in Frameworks */ = {isa = PBXBuildFile; productRef = 2F68C9FF2BB0338A00108259 /* SwiftLintFramework */; };
 		2FBA53EC2BADCEFC0068A863 /* ContentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FBA53EB2BADCEFC0068A863 /* ContentViewModel.swift */; };
 		2FBA53EE2BADD2B00068A863 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FBA53ED2BADD2B00068A863 /* CameraView.swift */; };
 		2FBA53F02BAEF33A0068A863 /* SettingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FBA53EF2BAEF33A0068A863 /* SettingView.swift */; };
@@ -53,6 +54,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2F68CA002BB0338A00108259 /* SwiftLintFramework in Frameworks */,
 				9F71B01F549EF8601F7EAF36 /* Pods_Panorama360_MatterportAxis.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -158,8 +160,12 @@
 			buildRules = (
 			);
 			dependencies = (
+				2F68CA022BB0339500108259 /* PBXTargetDependency */,
 			);
 			name = Panorama360_MatterportAxis;
+			packageProductDependencies = (
+				2F68C9FF2BB0338A00108259 /* SwiftLintFramework */,
+			);
 			productName = Panorama360_MatterportAxis;
 			productReference = 2F4A974F2954776A0038FD77 /* Panorama360_MatterportAxis.app */;
 			productType = "com.apple.product-type.application";
@@ -188,6 +194,9 @@
 				Base,
 			);
 			mainGroup = 2F4A97462954776A0038FD77;
+			packageReferences = (
+				2F68C9FE2BB0338A00108259 /* XCRemoteSwiftPackageReference "SwiftLint" */,
+			);
 			productRefGroup = 2F4A97502954776A0038FD77 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -273,6 +282,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2F68CA022BB0339500108259 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = 2F68CA012BB0339500108259 /* SwiftLintBuildToolPlugin */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		2F4A97612954776C0038FD77 /* Debug */ = {
@@ -473,6 +489,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		2F68C9FE2BB0338A00108259 /* XCRemoteSwiftPackageReference "SwiftLint" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/realm/SwiftLint";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		2F68C9FF2BB0338A00108259 /* SwiftLintFramework */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2F68C9FE2BB0338A00108259 /* XCRemoteSwiftPackageReference "SwiftLint" */;
+			productName = SwiftLintFramework;
+		};
+		2F68CA012BB0339500108259 /* SwiftLintBuildToolPlugin */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2F68C9FE2BB0338A00108259 /* XCRemoteSwiftPackageReference "SwiftLint" */;
+			productName = "plugin:SwiftLintBuildToolPlugin";
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 2F4A97472954776A0038FD77 /* Project object */;
 }
