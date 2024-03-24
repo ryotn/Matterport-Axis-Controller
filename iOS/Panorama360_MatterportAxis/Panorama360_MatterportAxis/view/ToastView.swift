@@ -27,12 +27,12 @@ struct ToastView: View {
         .transition(AnyTransition.opacity)
         .onTapGesture {
             withAnimation {
-                self.isShown = false
+                isShown = false
             }
         }.onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                 withAnimation {
-                    self.isShown = false
+                    isShown = false
                 }
             }
         }

@@ -85,13 +85,13 @@ struct ContentView: View {
                             .overlay {
                                 Button(action: {
                                     model.createDir()
-                                }) {
+                                }, label: {
                                     VStack {
                                         Image(systemName: "folder.badge.plus")
                                         Text("Create Dir")
                                             .font(.system(size: 10))
                                     }
-                                }
+                                })
                             }
                     }
                     HStack {
@@ -99,13 +99,13 @@ struct ContentView: View {
                             .overlay {
                                 Button(action: {
                                     model.resetAngle()
-                                }) {
+                                }, label: {
                                     VStack {
                                         Image(systemName: "rotate.3d")
                                             .font(.system(size: 50))
                                         Text("Reset")
                                     }
-                                }
+                                })
                                 .disabled(!model.isBtStandby || !model.isConnected)
                             }
 
@@ -118,13 +118,13 @@ struct ContentView: View {
                             .overlay {
                                 Button(action: {
                                     model.changeLens()
-                                }) {
+                                }, label: {
                                     VStack {
                                         Image(systemName: "arrow.triangle.2.circlepath.camera")
                                             .font(.system(size: 50))
                                         Text(model.CAMERA_TYPE_LABEL[model.mCameraType.rawValue])
                                     }
-                                }
+                                })
                             }
                     }
                     .padding(.top)

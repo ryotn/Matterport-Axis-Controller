@@ -13,10 +13,13 @@ import UIKit
 
 class PreviewView: UIView {
     override class var layerClass: AnyClass {
-        return AVCaptureVideoPreviewLayer.self
+        AVCaptureVideoPreviewLayer.self
     }
 
-    var videoPreviewLayer: AVCaptureVideoPreviewLayer {
-        return layer as! AVCaptureVideoPreviewLayer
+    var videoPreviewLayer: AVCaptureVideoPreviewLayer? {
+        guard let avCaptureVideoPreviewLayer = layer as? AVCaptureVideoPreviewLayer else {
+            return nil
+        }
+        return avCaptureVideoPreviewLayer
     }
 }

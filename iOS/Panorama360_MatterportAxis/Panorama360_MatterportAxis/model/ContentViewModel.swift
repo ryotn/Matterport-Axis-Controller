@@ -98,7 +98,7 @@ class ContentViewModel: ObservableObject {
             isCapture = false
             mCompSound.play()
         } else if mAngle % mAutoRotationAngle == 0 {
-            if !isSavePhoto && mReceiveAngleDate.timeIntervalSince(mSendAngleDate) > 0.5 {
+            if !isSavePhoto, mReceiveAngleDate.timeIntervalSince(mSendAngleDate) > 0.5 {
                 savePhoto()
             }
         }
@@ -171,7 +171,7 @@ class ContentViewModel: ObservableObject {
     }
 }
 
-extension ContentViewModel: MatterportAxisManagerDelegate {
+extension ContentViewModel: MatterportAxisManager.Delegate {
     func changeBtState(msg: String) {
         isBtStandby = mMatterportAxisManager?.getBtStatus() ?? false
         showToast(msg: msg)
@@ -197,7 +197,7 @@ extension ContentViewModel: MatterportAxisManagerDelegate {
     }
 }
 
-extension ContentViewModel: CameraCaptureDelegate {
+extension ContentViewModel: CameraCapture.Delegate {
     func onSuccessCapturePhoto() {
         if mAutoRotationFlg || (!mAutoRotationFlg || mAngle != 0) {
             mMatterportAxisManager?.sendAngle(angle: UInt8(mAutoRotationAngle))
@@ -205,7 +205,7 @@ extension ContentViewModel: CameraCaptureDelegate {
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [self] in
-            if isCapture && !mAutoRotationFlg {
+            if isCapture, !mAutoRotationFlg {
                 mAutoRotationFlg = true
             }
         }

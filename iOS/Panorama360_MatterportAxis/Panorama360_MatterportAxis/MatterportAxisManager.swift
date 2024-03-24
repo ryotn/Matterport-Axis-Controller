@@ -9,15 +9,15 @@ import CoreBluetooth
 import Foundation
 import UIKit
 
-protocol MatterportAxisManagerDelegate {
-    func changeBtState(msg: String)
-    func connected()
-    func connectFailure()
-    func disconnected()
-    func receiveAngle()
-}
-
 class MatterportAxisManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
+    protocol Delegate {
+        func changeBtState(msg: String)
+        func connected()
+        func connectFailure()
+        func disconnected()
+        func receiveAngle()
+    }
+
     private let CONNECT_DEVICE_NAME = "Matterport Axis"
     private let SERVICE_UUID = CBUUID(string: "FFE0")
     private let WRITE_CHARACTERISTIC_UUID = CBUUID(string: "FFE1")
@@ -27,35 +27,35 @@ class MatterportAxisManager: NSObject, CBCentralManagerDelegate, CBPeripheralDel
     private var connected: Bool = false
     private var mAngle = 0
     private var mCentralManager: CBCentralManager!
-    private var mPeripheral: CBPeripheral? = nil
-    private var mWriteCharacteristic: CBCharacteristic? = nil
-    private var mNotifyCharacteristic: CBCharacteristic? = nil
+    private var mPeripheral: CBPeripheral?
+    private var mWriteCharacteristic: CBCharacteristic?
+    private var mNotifyCharacteristic: CBCharacteristic?
 
-    private var delegate: MatterportAxisManagerDelegate!
+    private var delegate: Delegate!
 
-    init(delegate: MatterportAxisManagerDelegate) {
+    init(delegate: Delegate) {
         super.init()
         self.delegate = delegate
         mCentralManager = CBCentralManager(delegate: self, queue: nil)
     }
 
     func getBtStatus() -> Bool {
-        return mBtStatus
+        mBtStatus
     }
 
     func getAngle() -> Int {
-        return mAngle
+        mAngle
     }
 
     func isConnected() -> Bool {
-        return connected
+        connected
     }
 
     func resetAngle() {
         var zeroDegree = 360 - mAngle
         if zeroDegree > 0xFF {
             sendAngle(angle: 0xFF)
-            zeroDegree = zeroDegree - 0xFF
+            zeroDegree -= 0xFF
         }
         sendAngle(angle: UInt8(zeroDegree))
     }
@@ -109,7 +109,6 @@ class MatterportAxisManager: NSObject, CBCentralManagerDelegate, CBPeripheralDel
         case CBManagerState.unsupported:
             print("Bluetooth unsupported")
             msg = "Bluetooth unsupported"
-            break
         @unknown default:
             break
         }
@@ -117,7 +116,11 @@ class MatterportAxisManager: NSObject, CBCentralManagerDelegate, CBPeripheralDel
         delegate.changeBtState(msg: msg)
     }
 
-    func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData _: [String: Any], rssi _: NSNumber) {
+    func centralManager(_ central: CBCentralManager,
+                        didDiscover peripheral: CBPeripheral,
+                        advertisementData _: [String: Any],
+                        rssi _: NSNumber)
+    {
         if peripheral.name == CONNECT_DEVICE_NAME {
             mPeripheral = peripheral
             central.connect(peripheral, options: nil)
@@ -172,7 +175,7 @@ class MatterportAxisManager: NSObject, CBCentralManagerDelegate, CBPeripheralDel
     }
 
     func peripheral(_: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
-        if let error = error {
+        if let error {
             print("Write Error:", error.localizedDescription)
             return
         } else {
@@ -182,7 +185,7 @@ class MatterportAxisManager: NSObject, CBCentralManagerDelegate, CBPeripheralDel
 
     func peripheral(_: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         print("Receive Notify UUID:", characteristic.uuid.uuidString)
-        if let error = error {
+        if let error {
             print("Recive error:", error.localizedDescription)
         } else {
             if let receivedData = characteristic.value {

@@ -1,0 +1,7 @@
+line_length:
+  ignores_comments: true
+  ignores_urls: true
+
+disabled_rules:
+  - identifier_name
+  - opening_brace

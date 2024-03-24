@@ -9,6 +9,7 @@
 
 import SwiftUI
 
+typealias UIViewControllerType = PreviewView
 struct CameraView: View {
     let previewUIView: PreviewView
     var body: some View {
@@ -16,7 +17,6 @@ struct CameraView: View {
     }
 
     struct PreviewViewUIView: UIViewRepresentable {
-        typealias UIViewControllerType = PreviewView
         let previewUIView: PreviewView
         func makeUIView(context _: Context) -> UIViewControllerType {
             let previewView = previewUIView
