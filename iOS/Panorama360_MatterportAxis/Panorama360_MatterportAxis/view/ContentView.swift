@@ -10,7 +10,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject var model = ContentViewModel(isPreview: false)
     @Environment(\.scenePhase) var scenePhase
-    
+
     var body: some View {
         NavigationView {
             VStack {
@@ -40,14 +40,14 @@ struct ContentView: View {
                     }
                     HStack {
                         Slider(value: $model.mFocus,
-                               in: 0...1,
+                               in: 0 ... 1,
                                step: 0.1,
                                onEditingChanged: { _ in
-                            model.setFocus()
-                        })
-                        .padding(.horizontal)
-                        .padding(.bottom)
-                        
+                                   model.setFocus()
+                               })
+                               .padding(.horizontal)
+                               .padding(.bottom)
+
                         Text(String(format: "%.1f", model.mFocus))
                             .frame(width: 50)
                             .padding(.trailing)
@@ -55,18 +55,18 @@ struct ContentView: View {
                     }
                 }
                 .background(.regularMaterial)
-                
+
                 Spacer()
-                
+
                 CameraView(previewUIView: model.mPreviewView)
-                
+
                 Spacer()
-                
+
                 VStack {
                     HStack {
                         Spacer()
                             .overlay {
-                                Text(String.init(format: "%d°", model.mAngle))
+                                Text(String(format: "%d°", model.mAngle))
                             }
                         Menu(model.EXPOSURE_MODES_LABEL[model.mExposureBracketMode]) {
                             Section("Exposure Bracket Mode") {
@@ -80,7 +80,7 @@ struct ContentView: View {
                         .frame(minWidth: 100)
                         .buttonStyle(.borderedProminent)
                         .padding()
-                        
+
                         Spacer()
                             .overlay {
                                 Button(action: {
@@ -93,7 +93,6 @@ struct ContentView: View {
                                     }
                                 }
                             }
-                        
                     }
                     HStack {
                         Spacer()
@@ -109,12 +108,12 @@ struct ContentView: View {
                                 }
                                 .disabled(!model.isBtStandby || !model.isConnected)
                             }
-                        
+
                         Button("", systemImage: model.isCapture ? "stop.circle" : "record.circle") {
                             model.startCapture()
                         }
                         .font(.system(size: 75))
-                        
+
                         Spacer()
                             .overlay {
                                 Button(action: {

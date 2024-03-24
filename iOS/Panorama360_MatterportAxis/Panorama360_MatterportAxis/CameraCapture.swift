@@ -7,10 +7,10 @@
 //  https://qiita.com/t_okkan/items/b2dd11426eab107c5d15
 //
 
-import Foundation
-import UIKit
 import AVFoundation
+import Foundation
 import MediaPlayer
+import UIKit
 
 protocol CameraCaptureDelegate {
     func onSuccessCapturePhoto()
@@ -35,42 +35,41 @@ class CameraCapture: NSObject {
     private var mCapCount = 0
     private var mExposureMode = 3
     private var mSaveImages = [CIImage]()
-    
+
     var mCaptureSession = AVCaptureSession()
-    
+
     var mWideCamera: AVCaptureDevice?
     var mUltraWideCamera: AVCaptureDevice?
-    
+
     var mCurrentDevice: AVCaptureDevice?
-    
-    var mPhotoOutput : AVCapturePhotoOutput?
-    
-    var mPreviewLayer : AVCaptureVideoPreviewLayer?
-    var mPreviewView : PreviewView
+
+    var mPhotoOutput: AVCapturePhotoOutput?
+
+    var mPreviewLayer: AVCaptureVideoPreviewLayer?
+    var mPreviewView: PreviewView
     var mDelegate: CameraCaptureDelegate!
-    
-    init(view : PreviewView, delegate : CameraCaptureDelegate){
-        self.mPreviewView = view
-        self.mDelegate = delegate
+
+    init(view: PreviewView, delegate: CameraCaptureDelegate) {
+        mPreviewView = view
+        mDelegate = delegate
         super.init()
-        
+
         mFileSaveManager = FileSaveManager()
-        
+
         setupCaptureSession()
         setupDevice()
         setupInputOutput()
         setupPreviewLayer()
-        
+
         DispatchQueue.global(qos: .default).async {
             self.mCaptureSession.startRunning()
         }
     }
-    
 }
 
+// MARK: カメラ設定メソッド
 
-//MARK: カメラ設定メソッド
-extension CameraCapture{
+extension CameraCapture {
     // カメラの画質の設定
     func setupCaptureSession() {
         mCaptureSession.sessionPreset = AVCaptureSession.Preset.photo
@@ -94,25 +93,25 @@ extension CameraCapture{
         }
         // 起動時のカメラを設定
         mCurrentDevice = mWideCamera
-        
+
         setFocus(position: 0.8)
     }
-    
+
     func changeCamera(type: CameraType, focus: Float) {
         let oldDeviceInput = mCaptureSession.inputs[0]
-        
+
         if type == .normal {
             mCurrentDevice = mWideCamera
         } else if type == .wide {
             mCurrentDevice = mUltraWideCamera
         }
-        
+
         let newDeviceInput = try! AVCaptureDeviceInput(device: mCurrentDevice!)
         mCaptureSession.beginConfiguration()
         mCaptureSession.removeInput(oldDeviceInput)
         mCaptureSession.addInput(newDeviceInput)
         mCaptureSession.commitConfiguration()
-        
+
         setFocus(position: focus)
     }
 
@@ -126,7 +125,7 @@ extension CameraCapture{
             // 出力データを受け取るオブジェクトの作成
             mPhotoOutput = AVCapturePhotoOutput()
             // 出力ファイルのフォーマットを指定
-            mPhotoOutput!.setPreparedPhotoSettingsArray([AVCapturePhotoSettings(format: [AVVideoCodecKey : AVVideoCodecType.jpeg])], completionHandler: nil)
+            mPhotoOutput!.setPreparedPhotoSettingsArray([AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])], completionHandler: nil)
             mCaptureSession.addOutput(mPhotoOutput!)
         } catch {
             print(error)
@@ -136,24 +135,24 @@ extension CameraCapture{
     // カメラのプレビューを表示するレイヤの設定
     func setupPreviewLayer() {
         /*
-        // 指定したAVCaptureSessionでプレビューレイヤを初期化
-        self.mPreviewLayer = AVCaptureVideoPreviewLayer(session: mCaptureSession)
-        // プレビューレイヤが、カメラのキャプチャーを縦横比を維持した状態で、表示するように設定
-        self.mPreviewLayer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
-        // プレビューレイヤの表示の向きを設定
-        self.mPreviewLayer?.connection?.videoOrientation = AVCaptureVideoOrientation.portrait
+         // 指定したAVCaptureSessionでプレビューレイヤを初期化
+         self.mPreviewLayer = AVCaptureVideoPreviewLayer(session: mCaptureSession)
+         // プレビューレイヤが、カメラのキャプチャーを縦横比を維持した状態で、表示するように設定
+         self.mPreviewLayer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
+         // プレビューレイヤの表示の向きを設定
+         self.mPreviewLayer?.connection?.videoOrientation = AVCaptureVideoOrientation.portrait
 
-        self.mPreviewLayer?.frame = CGRect(x: 0, y: 0, width: mPreviewView.frame.width, height: mPreviewView.frame.height)
-        self.mPreviewView.layer.insertSublayer(self.mPreviewLayer!, at: 0)*/
+         self.mPreviewLayer?.frame = CGRect(x: 0, y: 0, width: mPreviewView.frame.width, height: mPreviewView.frame.height)
+         self.mPreviewView.layer.insertSublayer(self.mPreviewLayer!, at: 0)*/
         mPreviewView.videoPreviewLayer.session = mCaptureSession
         mPreviewView.videoPreviewLayer.videoGravity = AVLayerVideoGravity.resizeAspectFill
     }
-    
+
     func setFocus(position: Float) {
         guard let camDevice = mCurrentDevice else {
             return
         }
-        
+
         let isAutoFocus = canChangeFocus(device: camDevice)
         if !isAutoFocus { return }
 
@@ -168,53 +167,52 @@ extension CameraCapture{
                 print("\(camDevice.lensPosition)")
             }
             camDevice.unlockForConfiguration()
-        } catch _ {
-        }
+        } catch _ {}
     }
-    
+
     func canChangeFocus(device: AVCaptureDevice) -> Bool {
         return device.isFocusModeSupported(.autoFocus)
     }
-    
+
     func startCapture() {
         mBracketCaptureCount = 0
         mRemainingExposureValues = EXPOSURES_VALUE[mExposureMode]
         capturePhoto()
     }
-    
+
     // 一度に撮影できる枚数上限があるので、ブラケット撮影で上限を超える場合は小分けする
     private func capturePhoto() {
         let values = mRemainingExposureValues.prefix(mPhotoOutput!.maxBracketedCapturePhotoCount)
         mBracketCaptureCount = values.count
-        mRemainingExposureValues = mRemainingExposureValues.dropFirst(mPhotoOutput!.maxBracketedCapturePhotoCount).map{ $0 }
+        mRemainingExposureValues = mRemainingExposureValues.dropFirst(mPhotoOutput!.maxBracketedCapturePhotoCount).map { $0 }
         let makeAutoExposureSettings = AVCaptureAutoExposureBracketedStillImageSettings.autoExposureSettings(exposureTargetBias:)
         let exposureSettings = values.map(makeAutoExposureSettings)
-        
+
         let photoSettings = AVCapturePhotoBracketSettings(rawPixelFormatType: 0,
-            processedFormat: [AVVideoCodecKey : AVVideoCodecType.jpeg],
-            bracketedSettings: exposureSettings)
+                                                          processedFormat: [AVVideoCodecKey: AVVideoCodecType.jpeg],
+                                                          bracketedSettings: exposureSettings)
         photoSettings.isLensStabilizationEnabled = mPhotoOutput!.isLensStabilizationDuringBracketedCaptureSupported
         photoSettings.flashMode = .off
-        
+
         // 撮影された画像をdelegateメソッドで処理
-        self.mPhotoOutput?.capturePhoto(with: photoSettings, delegate: self as AVCapturePhotoCaptureDelegate)
+        mPhotoOutput?.capturePhoto(with: photoSettings, delegate: self as AVCapturePhotoCaptureDelegate)
     }
-    
+
     func createDir() -> Bool {
         mCapCount = 0
         return mFileSaveManager.reCreateDir()
     }
-    
+
     func setExposureMode(mode: Int) {
         mExposureMode = mode
     }
 }
 
+// MARK: AVCapturePhotoCaptureDelegate
 
-//MARK: AVCapturePhotoCaptureDelegate
-extension CameraCapture: AVCapturePhotoCaptureDelegate{
+extension CameraCapture: AVCapturePhotoCaptureDelegate {
     // 撮影した画像データが生成されたときに呼び出されるデリゲートメソッド
-    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+    func photoOutput(_: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error _: Error?) {
         if let imageData = photo.fileDataRepresentation() {
             guard let image = CIImage(data: imageData) else {
                 print("Failed to convert imageData to CIImage")
@@ -226,7 +224,7 @@ extension CameraCapture: AVCapturePhotoCaptureDelegate{
                 if mRemainingExposureValues.count != 0 {
                     capturePhoto()
                 } else {
-                    mSaveImages.enumerated().forEach { index, image in
+                    for (index, image) in mSaveImages.enumerated() {
                         var fileName = "\(mCapCount).jpeg"
                         if mExposureMode != 0 {
                             fileName = "\(mCapCount)_\(index).jpeg"
@@ -240,32 +238,32 @@ extension CameraCapture: AVCapturePhotoCaptureDelegate{
             }
         }
     }
-    //無音にする
-    func photoOutput(_ output: AVCapturePhotoOutput, willCapturePhotoFor resolvedSettings: AVCaptureResolvedPhotoSettings) {
-      AudioServicesDisposeSystemSoundID(1108)
+
+    // 無音にする
+    func photoOutput(_: AVCapturePhotoOutput, willCapturePhotoFor _: AVCaptureResolvedPhotoSettings) {
+        AudioServicesDisposeSystemSoundID(1108)
     }
 }
 
-//MARK: ListeningVolumeButton
-//元コード
-//https://gist.github.com/kazz12211/9d58af5c42ecbe35de58d66418412690
+// MARK: ListeningVolumeButton
+
+// 元コード
+// https://gist.github.com/kazz12211/9d58af5c42ecbe35de58d66418412690
 extension CameraCapture {
-    
     func initVolumeView() {
         let frame = CGRect(x: -100, y: -100, width: 100, height: 100)
         mVolumeView = MPVolumeView(frame: frame)
         mPreviewView.addSubview(mVolumeView)
 
-        for view : UIView in mVolumeView.subviews {
-            if(NSStringFromClass( view.classForCoder ) == "MPVolumeSlider" ){
+        for view: UIView in mVolumeView.subviews {
+            if NSStringFromClass(view.classForCoder) == "MPVolumeSlider" {
                 let volume = view as! UISlider
                 mVolumeSlider = volume
                 break
             }
         }
-
     }
-    
+
     func startListeningVolume() {
         setAudioSessionActive(active: true)
         mVolumeObservTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true, block: { [self] _ in
@@ -276,34 +274,33 @@ extension CameraCapture {
             }
         })
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [self] in
-            mOutputVolumeObservers.append(AVAudioSession.sharedInstance().observe(\.outputVolume, options: .new) {_, change in
+            mOutputVolumeObservers.append(AVAudioSession.sharedInstance().observe(\.outputVolume, options: .new) { _, _ in
                 self.changedVolume()
             })
         }
-        
     }
-    
+
     func stopListeningVolume() {
         mVolumeObservTimer?.invalidate()
         mVolumeObservTimer = nil
         mOutputVolumeObservers.removeAll()
         setAudioSessionActive(active: false)
     }
-    
+
     func setInitalVolume() {
         stopListeningVolume()
         mOutputVolumeObservers.removeAll()
         mVolumeSlider.setValue(INITAL_VOLUME, animated: false)
         startListeningVolume()
     }
-    
+
     func changedVolume() {
         print("シャッターボタン")
         mDelegate.pushRemoteShutterButton()
-        
+
         setInitalVolume()
     }
-    
+
     private func setAudioSessionActive(active: Bool) {
         do {
             try AVAudioSession.sharedInstance().setActive(active)

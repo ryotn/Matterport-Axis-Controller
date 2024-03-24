@@ -11,7 +11,7 @@ struct SettingView: View {
     @State var v = false
     var body: some View {
         NavigationView {
-            List{
+            List {
                 Toggle(isOn: $v, label: {
                     Text("Label")
                 })
