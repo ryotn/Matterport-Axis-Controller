@@ -10,31 +10,31 @@
 import SwiftUI
 
 struct ToastView: View {
-  let text: String
-  @Binding var isShown: Bool
+    let text: String
+    @Binding var isShown: Bool
 
-  var body: some View {
-    VStack {
-      Spacer()
-    Text(text)
-        .font(.headline)
-        .foregroundColor(.primary)
-        .padding(20)
-        .background(Color(UIColor.secondarySystemBackground))
-        .clipShape(Capsule())
+    var body: some View {
+        VStack {
+            Spacer()
+            Text(text)
+                .font(.headline)
+                .foregroundColor(.primary)
+                .padding(20)
+                .background(Color(UIColor.secondarySystemBackground))
+                .clipShape(Capsule())
+        }
+        .frame(width: UIScreen.main.bounds.width / 1.25)
+        .transition(AnyTransition.opacity)
+        .onTapGesture {
+            withAnimation {
+                isShown = false
+            }
+        }.onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                withAnimation {
+                    isShown = false
+                }
+            }
+        }
     }
-    .frame(width: UIScreen.main.bounds.width / 1.25)
-    .transition(AnyTransition.opacity)
-    .onTapGesture {
-      withAnimation {
-        self.isShown = false
-      }
-    }.onAppear {
-       DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-         withAnimation {
-           self.isShown = false
-         }
-       }
-    }
-  }
 }
