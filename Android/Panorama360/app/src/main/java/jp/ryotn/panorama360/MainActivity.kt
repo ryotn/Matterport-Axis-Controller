@@ -34,6 +34,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import androidx.preference.PreferenceManager
+import jp.ryotn.panorama360.camera.Camera360Manager
+import jp.ryotn.panorama360.camera.CameraInfoService
 import kotlinx.coroutines.DelicateCoroutinesApi
 
 class MainActivity : AppCompatActivity() {

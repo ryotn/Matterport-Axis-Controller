@@ -1,4 +1,4 @@
-package jp.ryotn.panorama360
+package jp.ryotn.panorama360.camera
 //元コード
 //https://gist.github.com/mtkw0127/a905563f2b0c6cd0c610864a73c00ea6#file-camerainfoservice-kt
 import android.annotation.SuppressLint

@@ -1,4 +1,4 @@
-package jp.ryotn.panorama360
+package jp.ryotn.panorama360.camera
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -30,6 +30,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.documentfile.provider.DocumentFile
 import androidx.exifinterface.media.ExifInterface
+import jp.ryotn.panorama360.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import java.io.FileNotFoundException
@@ -184,7 +185,8 @@ class Camera360Manager(context: Context) {
             texture?.setDefaultBufferSize(size.width, size.height)
             mSurface = Surface(texture)
             mImageReader = ImageReader.newInstance(
-                imageReaderSize.width, imageReaderSize.height, ImageFormat.JPEG, IMAGE_BUFFER_SIZE)
+                imageReaderSize.width, imageReaderSize.height, ImageFormat.JPEG, IMAGE_BUFFER_SIZE
+            )
 
             mPhysicalCameraId = physicalCameraId
 
@@ -370,14 +372,16 @@ class Camera360Manager(context: Context) {
                     try {
                         outputStream?.write(bytes)
                         outputStream?.close()
+                        image.close()
                         val focalLengthIn35mm = getFocalLengthIn35mm()
-                        val exifs = arrayOf(Exif(ExifInterface.TAG_FOCAL_LENGTH_IN_35MM_FILM, focalLengthIn35mm.toInt().toString()),
+                        val exifs = arrayOf(
+                            Exif(ExifInterface.TAG_FOCAL_LENGTH_IN_35MM_FILM, focalLengthIn35mm.toInt().toString()),
                             Exif(ExifInterface.TAG_USER_COMMENT, "focalLengthIn35mm:$focalLengthIn35mm"),
                             Exif(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_ROTATE_90.toString()),
-                            Exif(ExifInterface.TAG_EXPOSURE_BIAS_VALUE, exposureBracketList[mExposureBracketCount].toString())
+                            Exif(ExifInterface.TAG_EXPOSURE_BIAS_VALUE, "${exposureBracketList[mExposureBracketCount]}/1"),
+                            Exif(ExifInterface.TAG_EXPOSURE_MODE, ExifInterface.EXPOSURE_MODE_AUTO_BRACKET.toString()),
                         )
                         writeEXIFWithFileDescriptor(exifs, createFile!!.uri)
-                        image.close()
                         val msg = "Photo capture succeeded: ${createFile.uri}"
                         Log.d(TAG, msg)
                         mExposureBracketCount++

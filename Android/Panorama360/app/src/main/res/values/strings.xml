@@ -20,6 +20,7 @@
     <string name="HDR">HDR</string>
     <string name="night">Night</string>
     <string name="exposure_bracket_mode">Exposure Bracket Mode</string>
+    <string name="title_activity_main2">MainActivity2</string>
     <string-array name="exposure_bracket_mode_items">
         <item>None</item>
         <item>+-1 EV</item>
