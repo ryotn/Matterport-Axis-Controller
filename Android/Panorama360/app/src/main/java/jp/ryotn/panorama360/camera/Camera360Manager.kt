@@ -108,7 +108,6 @@ class Camera360Manager(context: Context) {
 
     @SuppressLint("MissingPermission")
     fun startCamera(viewFinder: TextureView, cameraId: String, physicalCameraId: String?, mode:Int? = null) {
-        mExposureBracketMode = 0
         cameraId.let { id ->
             mCameraManager.openCamera(id, object: CameraDevice.StateCallback() {
                 override fun onOpened(camera: CameraDevice) {
