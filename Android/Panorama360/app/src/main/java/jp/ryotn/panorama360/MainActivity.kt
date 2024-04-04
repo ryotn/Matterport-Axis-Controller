@@ -1,422 +1,473 @@
 package jp.ryotn.panorama360
 
+import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.Application
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
-import android.content.SharedPreferences
-import android.graphics.SurfaceTexture
-import android.hardware.camera2.CameraExtensionCharacteristics
-import androidx.appcompat.app.AppCompatActivity
+import android.content.pm.PackageManager
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
-import android.util.Range
 import android.view.KeyEvent
-import android.view.TextureView
-import android.view.View
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.WindowManager
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.Button
 import android.widget.FrameLayout
-import android.widget.RadioButton
-import android.widget.RadioGroup
-import android.widget.SeekBar
-import android.widget.Spinner
-import android.widget.TextView
-import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.edit
-import androidx.core.net.toUri
-import androidx.documentfile.provider.DocumentFile
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import androidx.preference.PreferenceManager
-import kotlinx.coroutines.DelicateCoroutinesApi
+import androidx.activity.viewModels
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat.checkSelfPermission
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import jp.ryotn.panorama360.model.MainViewModel
+import jp.ryotn.panorama360.ui.theme.Panorama360Theme
+import jp.ryotn.panorama360.view.CameraView
+import kotlinx.coroutines.flow.asStateFlow
 
-class MainActivity : AppCompatActivity() {
-    companion object {
-        private const val TAG = "MainActivity"
-    }
+class MainActivity : ComponentActivity() {
+    private val model: MainViewModel by viewModels()
 
-    private val mViewFinder: TextureView by lazy {
-        findViewById(R.id.viewFinder)
-    }
-
-    private lateinit var mDefaultPreference: SharedPreferences
-    private var mCamera360Manager: Camera360Manager? = null
-    private lateinit var mMatterportAxisManager: MatterportAxisManager
-    private lateinit var mSoundPlayer: SoundPlayer
-    private lateinit var mTextState: TextView
-    private lateinit var mTextAngle: TextView
-    private lateinit var mBtnConnect: Button
-    private lateinit var mBtnStart: Button
-    private lateinit var mBtnResetAngle: Button
-    private lateinit var mBtnTestCapture: Button
-    private lateinit var mBtnCreateDir: Button
-    private lateinit var mTextFocusDistance: TextView
-    private lateinit var mSeekBarFocusDistance: SeekBar
-    private lateinit var mRadioWideLens: RadioButton
-    private lateinit var mRadioUltraWideLens: RadioButton
-    private lateinit var mRadioGroupLensSel: RadioGroup
-    private lateinit var mRadioModeNormal: RadioButton
-    private lateinit var mRadioModeHDR: RadioButton
-    private lateinit var mRadioModeNight: RadioButton
-    private lateinit var mRadioGroupModeSel: RadioGroup
-    private lateinit var mProcessingView: FrameLayout
-    private lateinit var mExposureBracketModeSpinner: Spinner
-
-    private var isPermission = false
-    private var mSelectedCameraInfo: CameraInfoService.ExtendedCameraInfo? = null
-
-    private var isShooting: Boolean = false
-    private var mShotAngleSum: Int = 0
-    private var mRotationAngle: Int = 30
-
-    private val permissionResults = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result: Map<String, Boolean> ->
-        if (result.all { it.value }) {
-            Toast.makeText(this, "全部権限取れた", Toast.LENGTH_SHORT).show()
-
-            mBtnConnect.isEnabled = true
-            isPermission = true
-            initCamera360Manager()
-            getFilePath()
-        } else {
-            Toast.makeText(this, "全部権限取れなかった！", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private val mStartForResult =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                val uri = result.data?.data ?: return@registerForActivityResult
-                Log.d(TAG, "get File Save Path $uri")
-                contentResolver.takePersistableUriPermission(
-                    uri,
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                )
-
-                mDefaultPreference.edit {
-                    putString("uri", uri.toString())
-                }
-
-                mCamera360Manager?.setOutputDirectory(uri)
-            }
-        }
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        mProcessingView = findViewById(R.id.processingView)
-        mDefaultPreference = PreferenceManager.getDefaultSharedPreferences(this)
-        mMatterportAxisManager = MatterportAxisManager(context = this)
-        mSoundPlayer = SoundPlayer(context = this)
-
-        mTextState = findViewById(R.id.txtState)
-        mTextAngle = findViewById(R.id.txtAngle)
-        mTextAngle.text = getString(R.string.angle,0)
-        mBtnStart = findViewById(R.id.btnStart)
-        mBtnResetAngle = findViewById(R.id.btnReset)
-        mBtnConnect = findViewById(R.id.btnConnect)
-        mBtnTestCapture = findViewById(R.id.btnTestCapture)
-        mBtnCreateDir = findViewById(R.id.btnCreateDir)
-        mTextFocusDistance = findViewById(R.id.txtFocusDistance)
-        mSeekBarFocusDistance = findViewById(R.id.seekFocusDistance)
-        mRadioWideLens = findViewById(R.id.radioWide)
-        mRadioUltraWideLens = findViewById(R.id.radioUltra)
-        mRadioGroupLensSel = findViewById(R.id.radioGroupLensSel)
-        mRadioModeNormal = findViewById(R.id.radioNormal)
-        mRadioModeHDR = findViewById(R.id.radioHDR)
-        mRadioModeNight = findViewById(R.id.radioNight)
-        mRadioGroupModeSel = findViewById(R.id.radioGroupModeSel)
-        mExposureBracketModeSpinner = findViewById(R.id.exposureBracketModeSpinner)
-
-        mBtnConnect.setOnClickListener {
-            if (mMatterportAxisManager.isConnected()) {
-                mMatterportAxisManager.disconnect()
-                mBtnConnect.text = getString(R.string.connect)
-            } else {
-                mMatterportAxisManager.connect()
-                mBtnConnect.text = getString(R.string.connecting)
-            }
-            mBtnConnect.isEnabled = false
-        }
-        mBtnConnect.isEnabled = false
-
-        mBtnStart.setOnClickListener {
-            startCapture()
-        }
-
-        mBtnResetAngle.setOnClickListener {
-            mMatterportAxisManager.resetAngle()
-            mBtnResetAngle.isEnabled = false
-            Handler(Looper.getMainLooper()).postDelayed( {
-                mBtnResetAngle.isEnabled = true
-            }, 1000)
-        }
-        mBtnResetAngle.isEnabled = false
-
-        mSeekBarFocusDistance.progress = (resources.getString(R.string.default_focus_distance).toFloat() * 10).toInt()
-        mSeekBarFocusDistance.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                mTextFocusDistance.text = (progress / 10.0F).toString()
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar) {
-            }
-
-            override fun onStopTrackingTouch(seekBar: SeekBar) {
-                val focalDistance = seekBar.progress / 10.0F
-                mCamera360Manager?.setFocusDistance(focalDistance)
-            }
-        })
-
-        mBtnTestCapture.setOnClickListener {
-            mProcessingView.visibility = View.VISIBLE
-            mCamera360Manager?.takePhoto()
-        }
-
-        mBtnCreateDir.setOnClickListener {
-            mCamera360Manager?.createDir()
-        }
-
-        mRadioGroupLensSel.setOnCheckedChangeListener { _, checkedId ->
-            mCamera360Manager?.stopCamera()
-            if (mRadioWideLens.id == checkedId) {
-                mRotationAngle = 30
-                CameraInfoService.getWideRangeCameraInfo()?.let {
-                    changeCamera(it)
-                }
-            } else if (mRadioUltraWideLens.id == checkedId) {
-                mRotationAngle = 60
-                CameraInfoService.getSuperWideRangeCameraInfo()?.let {
-                    changeCamera(it)
-                }
-            }
-        }
-
-        mRadioModeNormal.setOnClickListener {
-            changeRadioModeSelButton(it as RadioButton)
-        }
-        mRadioModeNight.setOnClickListener {
-            changeRadioModeSelButton(it as RadioButton)
-        }
-        mRadioModeHDR.setOnClickListener {
-            changeRadioModeSelButton(it as RadioButton)
-        }
-
-        mExposureBracketModeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
-                mCamera360Manager?.setExposureBracketMode(pos)
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-            }
-
-        }
-
-        mMatterportAxisManager.mListener = mMatterportAxisManagerListener
-    }
-
-    private fun changeRadioModeSelButton(button: RadioButton) {
-        if (mRadioGroupModeSel.checkedRadioButtonId == button.id) {
-            var mode: Int? = null
-            if (mRadioModeNormal.id == button.id) {
-                mode = null
-            } else if (mRadioModeHDR.id == button.id) {
-                mode = CameraExtensionCharacteristics.EXTENSION_HDR
-            } else if (mRadioModeNight.id == button.id) {
-                mode = CameraExtensionCharacteristics.EXTENSION_NIGHT
-            }
-            mSelectedCameraInfo?.let {
-                changeCamera(it, mode)
-            }
-        }
-    }
-
-    private fun initCamera360Manager() {
-        if (mCamera360Manager?.isStart == true) return
-        mRadioGroupLensSel.check(mRadioWideLens.id)
-        mRadioGroupModeSel.check(mRadioModeNormal.id)
-
-        if (mCamera360Manager == null) {
-            mCamera360Manager = Camera360Manager(context = this)
-            mCamera360Manager?.mListener = mCamera360ManagerListener
-        }
-
-        if (isPermission) {
-            CameraInfoService.getWideRangeCameraInfo()?.let {
-                changeCamera(it)
-            }
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-
-        Log.d(TAG, "onResume")
-        if (!mViewFinder.isActivated) {
-            mViewFinder.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
-                override fun onSurfaceTextureAvailable(p0: SurfaceTexture, p1: Int, p2: Int) {
-                    permissionResults.launch(arrayOf(android.Manifest.permission.BLUETOOTH_CONNECT,
-                        android.Manifest.permission.BLUETOOTH_SCAN,
-                        android.Manifest.permission.CAMERA))
-                }
-
-                override fun onSurfaceTextureSizeChanged(p0: SurfaceTexture, p1: Int, p2: Int) {
-                }
-
-                override fun onSurfaceTextureDestroyed(p0: SurfaceTexture): Boolean {
-                    Log.d(TAG, "onSurfaceTextureDestroyed")
-                    return true
-                }
-
-                override fun onSurfaceTextureUpdated(p0: SurfaceTexture) {
-                }
-            }
-        }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        mCamera360Manager?.stopCamera()
-        mMatterportAxisManager.disconnect()
-        Log.d(TAG, "onDestroy")
-    }
-
-    private fun changeCamera(extendedCameraInfo: CameraInfoService.ExtendedCameraInfo, mode: Int? = null) {
-        mSelectedCameraInfo = extendedCameraInfo
-        mCamera360Manager?.stopCamera()
-        if (mode == null) mRadioGroupModeSel.check(mRadioModeNormal.id)
-        mCamera360Manager?.startCamera(mViewFinder ,extendedCameraInfo.cameraId ,extendedCameraInfo.physicalCameraId, mode)
-        mRadioModeHDR.isEnabled = extendedCameraInfo.isHDR
-        mRadioModeNight.isEnabled = extendedCameraInfo.isNightMode
-    }
-
-    private fun startCapture() {
-        if (isShooting || !mMatterportAxisManager.isConnected()) return
-        mSoundPlayer.playStartSound()
-        mBtnStart.isEnabled = false
-        mShotAngleSum = mRotationAngle
-        Handler(Looper.getMainLooper()).postDelayed({
-            mCamera360Manager?.takePhoto()
-        }, 500)
-        Handler(Looper.getMainLooper()).postDelayed({
-            isShooting = true
-        }, 1000)
-    }
-
-    private fun getFilePath() {
-        val uriStr = mDefaultPreference.getString("uri", null)
-        if (uriStr.isNullOrEmpty()) {
-            getFilePermission()
-        } else {
-            val dir = DocumentFile.fromTreeUri(this, uriStr.toUri())
-            dir?.let {
-                if (it.canWrite()) {
-                    Log.d(TAG, "保存先のPermission取得済み $uriStr")
-                    mCamera360Manager?.setOutputDirectory(uriStr.toUri())
-                } else {
-                    getFilePermission()
-                }
-            }
-        }
-    }
-
-    private fun getFilePermission() {
-        mStartForResult.launch(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE))
-    }
-
+    @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
         event?.let {
-            Log.d(TAG, "keycode:${it.keyCode}")
+            Log.d("MainActivity", "keycode:${it.keyCode}")
             if (it.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
                 it.keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
-                if(it.action == KeyEvent.ACTION_UP)startCapture()
+                if(it.action == KeyEvent.ACTION_UP)model.startCapture()
                 return true
             }
         }
         return super.dispatchKeyEvent(event)
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
-    private val mMatterportAxisManagerListener = object : MatterportAxisManager.MatterportAxisManagerListener {
-        override fun connected() {
-            GlobalScope.launch(Dispatchers.Main) {
-                mBtnConnect.text = getString(R.string.disconnect)
-                mTextState.text = getString(R.string.state_connected)
-                mBtnConnect.isEnabled = true
-                mBtnResetAngle.isEnabled = true
-            }
-        }
-
-        override fun disconnected() {
-            GlobalScope.launch(Dispatchers.Main) {
-                mBtnConnect.text = getString(R.string.connect)
-                mTextState.text = getString(R.string.state_disconnected)
-                mBtnConnect.isEnabled = true
-                mBtnResetAngle.isEnabled = false
-            }
-        }
-
-        override fun receiveAngle() {
-            GlobalScope.launch(Dispatchers.Main) {
-                val angle = mMatterportAxisManager.getAngle()
-                mTextAngle.text = getString(R.string.angle, angle)
-                if (isShooting) {
-                    if (mShotAngleSum >= 360 && angle == 0) {
-                        isShooting = false
-                        mBtnStart.isEnabled = true
-                        mSoundPlayer.playCompSound()
-                    } else if (angle == mShotAngleSum) {
-                        mShotAngleSum += mRotationAngle
-                        mCamera360Manager?.takePhoto()
-                    }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        model.init()
+        setContent {
+            Panorama360Theme {
+                KeepScreenOn()
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    getPermission(model)
+                    Contents(model = model)
                 }
             }
         }
     }
+}
 
-    private val mCamera360ManagerListener = object : Camera360Manager.Camera360ManagerListener {
-        override fun initFinish() {
-            initCamera360Manager()
+// Permission
+@Composable
+fun getPermission(model: MainViewModel) {
+    val context = LocalContext.current
+    val permissions = arrayOf(
+        android.Manifest.permission.CAMERA,
+        android.Manifest.permission.BLUETOOTH_SCAN,
+        android.Manifest.permission.BLUETOOTH_CONNECT
+    )
 
-            CameraInfoService.getSuperWideRangeCameraInfo()?.let {
-                mRadioUltraWideLens.isEnabled = true
+    var isDirectoryPermissionCheck = false
+    val directoryPermission =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val uri = result.data?.data ?: return@rememberLauncherForActivityResult
+                Log.d("getPermission", "get File Save Path $uri")
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                )
+
+                model.putPreferenceString("uri", uri.toString())
+                isDirectoryPermissionCheck = model.isFilePermission()
+                model.isPermission.value = true
             }
         }
 
-        override fun startCameraConfigured(context: Context) {
-            val exposureBracketList = Camera360Manager.EXPOSURE_BRACKET_LIST
-            val range = mCamera360Manager?.getAeCompensationRange() ?: Range(0,0)
-            val step = mCamera360Manager?.getAeCompensationStep() ?: 0.0
+    val launcherMultiplePermissions = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissionsMap ->
+        val areGranted = permissionsMap.values.reduce { acc, next -> acc && next }
+        if (areGranted) {
+            Log.d("getPermission.launcherMultiplePermissions", "Permission Granted")
+            if (model.isFilePermission()) {
+                model.setPermission(true)
+            } else if (!isDirectoryPermissionCheck) {
+                directoryPermission.launch(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE))
+                isDirectoryPermissionCheck = true
+            }
+        } else {
+            Log.d("getPermission.launcherMultiplePermissions", "not permitted")
+        }
+    }
 
-            val itemArray = mutableListOf("None")
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val lifecycleObserver = remember {
+        LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                if (!permissions.all {
+                        checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+                    }) {
+                    launcherMultiplePermissions.launch(permissions)
+                } else {
+                    Log.d("getPermission.lifecycleObserver", "Permission　すでに取得済み")
+                    if (model.isFilePermission()) {
+                        model.setPermission(true)
+                    } else if (!isDirectoryPermissionCheck) {
+                        directoryPermission.launch(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE))
+                        isDirectoryPermissionCheck = true
+                    }
+                }
+            } else if (event == Lifecycle.Event.ON_DESTROY) {
+                model.onDestroy()
+            }
+        }
+    }
 
-            exposureBracketList.forEach {
-                if (it.max() == 0) return@forEach
-                if (it.max() <= (range.upper * step)) {
-                    itemArray.add("+-${it.max()} EV")
+    DisposableEffect(lifecycle, lifecycleObserver) {
+        lifecycle.addObserver(lifecycleObserver)
+        onDispose {
+            lifecycle.removeObserver(lifecycleObserver)
+        }
+    }
+}
+
+@Composable
+fun Contents(model: MainViewModel) {
+    val isPermission: Boolean by model.isPermission.collectAsState()
+    val context = LocalContext.current
+    Column {
+        Header(model = model)
+
+        Row(horizontalArrangement = Arrangement.SpaceBetween) {
+            if (isPermission) {
+                AndroidView(
+                    modifier = Modifier
+                        .weight(1.0f)
+                        .aspectRatio(0.75f)
+                        .background(Color.Cyan),
+                    factory = {
+                        val cameraView = CameraView(context).apply {
+                            layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
+                        }
+                        cameraView.setModel(model)
+                        cameraView
+                    }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.weight(1.0f))
+        Footer(model = model)
+    }
+}
+
+@Composable
+fun Header(model: MainViewModel) {
+    val focus: Float by model.mFocus.asStateFlow().collectAsState()
+    val isConnect: Boolean by model.isConnect.collectAsState()
+    Column {
+        Row(modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween) {
+            IconButton(modifier = Modifier.padding(start = 24.dp,
+                top = 8.dp),
+                onClick = {
+                    model.connectMatterport()
+                }) {
+
+                if (isConnect) {
+                    Icon(
+                        modifier = Modifier.size(48.dp),
+                        painter = painterResource(id = R.drawable.connected),
+                        contentDescription = ""
+                    )
+                } else {
+                    Icon(
+                        modifier = Modifier.size(48.dp),
+                        painter = painterResource(id = R.drawable.disconnected),
+                        contentDescription = ""
+                    )
+                }
+            }
+            IconButton(modifier = Modifier.padding(end = 24.dp,
+                top = 8.dp),
+                onClick = { /*TODO*/ }) {
+                Icon(modifier = Modifier.size(48.dp),
+                    painter = painterResource(id = R.drawable.settings),
+                    contentDescription = "")
+            }
+        }
+        Row(horizontalArrangement = Arrangement.SpaceBetween) {
+            Slider(modifier = Modifier
+                .weight(0.8f)
+                .padding(start = 24.dp),
+                value = focus,
+                valueRange = 0f..1f,
+                steps = 10,
+                onValueChange = {
+                    model.setFocus(it)
+                })
+            Text(modifier = Modifier.padding(start = 14.dp,
+                top = 14.dp,
+                end = 24.dp),
+                text = "$focus")
+        }
+    }
+}
+
+@Composable
+fun Footer(model: MainViewModel) {
+    val context = LocalContext.current
+    var exposureBracketModeLabel by remember { mutableStateOf(context.getString(R.string.exposure_bracket_mode_none)) }
+    var cameraLabel by remember { mutableStateOf(context.getString(R.string.wide)) }
+    val angle: Int by model.mAngle.collectAsState()
+    val isUltraWide: Boolean by model.isUltraWide.collectAsState()
+    val isConnect: Boolean by model.isConnect.collectAsState()
+    val exposureBracketModeList: List<String> by model.mExposureBracketModeList.collectAsState()
+    Column {
+        Row(modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceEvenly) {
+            Text(
+                modifier = Modifier.width(64.dp),
+                textAlign = TextAlign.Center,
+                text = context.getString(R.string.angle, angle)
+            )
+
+            Spinner(
+                modifier = Modifier.wrapContentSize(),
+                dropDownModifier = Modifier.wrapContentSize(),
+                items = exposureBracketModeList,
+                selectedItem = exposureBracketModeLabel,
+                onItemSelected = {
+                    model.setExposureBracketMode(it)
+                    exposureBracketModeLabel =
+                        exposureBracketModeList[model.mExposureBracketMode]
+                },
+                selectedItemFactory = { modifier, item ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = modifier
+                            .padding(8.dp)
+                            .wrapContentSize()
+                    ) {
+                        Text(
+                            text = item,
+                            modifier = Modifier.width(64.dp),
+                            textAlign = TextAlign.Center
+                        )
+
+                        Icon(
+                            painter = painterResource(id = R.drawable.baseline_arrow_drop_down_24),
+                            contentDescription = ""
+                        )
+                    }
+                },
+                dropdownItemFactory = { item, _ ->
+                    Text(text = item)
+                }
+            )
+
+            IconButton(
+                modifier = Modifier.width(64.dp),
+                onClick = {
+                    model.createDir()
+                }) {
+                Column {
+                    Icon(
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        painter = painterResource(id = R.drawable.create_new_folder),
+                        contentDescription = context.getString(R.string.create_dir)
+                    )
+                    Text(
+                        fontSize = 12.sp,
+                        text = context.getString(R.string.create_dir)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Row(modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceEvenly) {
+
+            IconButton(
+                modifier = Modifier.size(76.dp),
+                enabled = isConnect,
+                onClick = {
+                    model.resetAngle()
+                }) {
+                Column {
+                    Icon(
+                        modifier = Modifier
+                            .size(60.dp)
+                            .align(Alignment.CenterHorizontally),
+                        painter = painterResource(id = R.drawable.baseline_360_24),
+                        contentDescription = context.getString(R.string.reset_angle)
+                    )
+                    Text(fontSize = 12.sp,
+                        modifier = Modifier.fillMaxWidth(),
+                        text = context.getString(R.string.reset_angle),
+                        textAlign = TextAlign.Center)
+                }
+            }
+            IconButton(
+                modifier = Modifier.size(126.dp),
+                onClick = {
+                    model.startCapture()
+                }) {
+                Column {
+                    Icon(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .align(Alignment.CenterHorizontally),
+                        painter = painterResource(id = R.drawable.baseline_mode_standby_24),
+                        contentDescription = ""
+                    )
                 }
             }
 
-            mExposureBracketModeSpinner.adapter = ArrayAdapter(context, android.R.layout.simple_spinner_dropdown_item, itemArray)
+            IconButton(
+                modifier = Modifier.size(76.dp),
+                enabled = isUltraWide,
+                onClick = {
+                    cameraLabel = model.toggleCamera()
+                }) {
+                Column {
+                    Icon(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .align(Alignment.CenterHorizontally),
+                        painter = painterResource(id = R.drawable.baseline_flip_camera_android_24),
+                        contentDescription = ""
+                    )
+                    Text(
+                        fontSize = 12.sp,
+                        modifier = Modifier.fillMaxWidth(),
+                        text = cameraLabel,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
         }
 
-        override fun takePhotoSuccess() {
-            Log.d(TAG, "takePhotoSuccess")
-            mMatterportAxisManager.sendAngle(mRotationAngle.toUByte())
-            mProcessingView.visibility = View.INVISIBLE
-        }
+        Spacer(modifier = Modifier.height(24.dp))
+    }
+}
 
-        override fun takePhotoError() {
-            Log.d(TAG, "takePhotoError")
-            isShooting = false
-            mBtnStart.isEnabled = true
-            mProcessingView.visibility = View.INVISIBLE
-        }
+@Composable
+fun <T> Spinner(
+    modifier: Modifier = Modifier,
+    dropDownModifier: Modifier = Modifier,
+    items: List<T>,
+    selectedItem: T,
+    onItemSelected: (Int) -> Unit,
+    selectedItemFactory: @Composable (Modifier, T) -> Unit,
+    dropdownItemFactory: @Composable (T, Int) -> Unit,
+) {
+    var expanded: Boolean by remember { mutableStateOf(false) }
 
+    Box(modifier = modifier.wrapContentSize(Alignment.TopStart)) {
+        selectedItemFactory(
+            Modifier
+                .clickable { expanded = true },
+            selectedItem
+        )
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = dropDownModifier
+        ) {
+            items.forEachIndexed { index, element ->
+                DropdownMenuItem(
+                    text = {
+                        dropdownItemFactory(element, index)
+                    },
+                    onClick = {
+                        onItemSelected(index)
+                        expanded = false
+                    })
+            }
+        }
+    }
+}
+
+@Composable
+fun KeepScreenOn() {
+    val context = LocalContext.current
+    DisposableEffect(Unit) {
+        val window = context.findActivity()?.window
+        window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        println("FLAG_KEEP_SCREEN_ON")
+        onDispose {
+            window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            println("FLAG_KEEP_SCREEN_OFF")
+        }
+    }
+}
+
+fun Context.findActivity(): Activity? {
+    var context = this
+    while (context is ContextWrapper) {
+        if (context is Activity) return context
+        context = context.baseContext
+    }
+    return null
+}
+
+@Preview(showSystemUi = true, showBackground = true)
+@Composable
+fun ContentsPreview() {
+    val model = MainViewModel(Application())
+    Panorama360Theme {
+        Contents(model = model)
     }
 }
