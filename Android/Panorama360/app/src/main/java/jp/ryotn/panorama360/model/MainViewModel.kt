@@ -38,8 +38,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private lateinit var mMatterportAxisManager: MatterportAxisManager
     private lateinit var mSoundPlayer: SoundPlayer
 
-    val mFocus: MutableStateFlow<Float> = MutableStateFlow(0.4f)
-    var mExposureBracketModeList: MutableStateFlow<List<String>> = MutableStateFlow(listOf("None"))
+    val mFocus: MutableStateFlow<Float> = MutableStateFlow(0.4f) //プレビュー用のダミー
+    var mExposureBracketModeList: MutableStateFlow<List<String>> = MutableStateFlow(listOf("")) //プレビュー用のダミー
     var mExposureBracketMode = 0
     val isConnect: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val mAngle: MutableStateFlow<Int> = MutableStateFlow(0)
@@ -104,11 +104,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         var nextCameraInfo: CameraInfoService.ExtendedCameraInfo? = null
         mSelectedCameraInfo?.let { cameraInfo ->
             nextCameraInfo = if (cameraInfo == CameraInfoService.getWideRangeCameraInfo()) {
-                nextCameraLabel = "Ultra Wide"
+                nextCameraLabel = application.getString(R.string.ultra_wide)
                 mRotationAngle = 60
                 CameraInfoService.getSuperWideRangeCameraInfo()
             } else {
-                nextCameraLabel = "Wide"
+                nextCameraLabel = application.getString(R.string.wide)
                 mRotationAngle = 30
                 CameraInfoService.getWideRangeCameraInfo()
             }
@@ -169,10 +169,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun connectMatterport() {
         if (mMatterportAxisManager.isConnected()) {
             mMatterportAxisManager.disconnect()
-            showToast("Disconnect...")
+            showToast(application.getString(R.string.disconnecting))
         } else {
             mMatterportAxisManager.connect()
-            showToast("Connect...")
+            showToast(application.getString(R.string.connecting))
         }
     }
 
@@ -207,7 +207,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         override fun connected() {
             GlobalScope.launch(Dispatchers.Main) {
                 isConnect.value = true
-                showToast("Connected")
+                showToast(application.getString(R.string.connected))
             }
         }
 
@@ -248,7 +248,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val range = mCamera360Manager?.getAeCompensationRange() ?: Range(0,0)
             val step = mCamera360Manager?.getAeCompensationStep() ?: 0.0
 
-            val itemArray = mutableListOf("None")
+            val itemArray = mutableListOf(application.getString(R.string.exposure_bracket_mode_none))
 
             exposureBracketList.forEach {
                 if (it.max() == 0) return@forEach

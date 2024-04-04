@@ -1,30 +1,14 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="UnusedResources">
     <string name="app_name">Panorama360</string>
     <string name="baseUUID" tools:ignore="TypographyDashes">0000%1$s-0000-1000-8000-00805F9B34FB</string>
-    <string name="connect">Connect</string>
+    <string name="connected">Connected</string>
     <string name="connecting" tools:ignore="TypographyEllipsis">Connecting...</string>
-    <string name="disconnect">Disconnect</string>
-    <string name="state_connected">Connected</string>
-    <string name="state_disconnected">Disconnected</string>
-    <string name="angle">Angle:%1$d</string>
-    <string name="start">Start</string>
-    <string name="stop">Stop</string>
+    <string name="disconnecting" tools:ignore="TypographyEllipsis">Disconnecting...</string>
+    <string name="angle">%1$d°</string>
     <string name="reset_angle">Reset Angle</string>
     <string name="default_focus_distance">0.4</string>
-    <string name="test_capture">Test Capture</string>
     <string name="create_dir">Create Dir</string>
-    <string name="focus_lock">Focus Lock</string>
     <string name="wide">Wide</string>
     <string name="ultra_wide">Ultra Wide</string>
-    <string name="normal">Normal</string>
-    <string name="HDR">HDR</string>
-    <string name="night">Night</string>
-    <string name="exposure_bracket_mode">Exposure Bracket Mode</string>
-    <string name="title_activity_main2">MainActivity2</string>
-    <string-array name="exposure_bracket_mode_items">
-        <item>None</item>
-        <item>+-1 EV</item>
-        <item>+-2 EV</item>
-        <item>+-3 EV</item>
-    </string-array>
+    <string name="exposure_bracket_mode_none">None</string>
 </resources>
