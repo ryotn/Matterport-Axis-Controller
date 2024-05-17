@@ -96,7 +96,7 @@ class Camera360Manager(context: Context) {
         cameraProviderFuture.addListener({
             mCameraProvider = cameraProviderFuture.get()
             mCameraProvider?.let {
-                CameraInfoService.initService(it.availableCameraInfos, mContext)
+                CameraInfoService.initService(mContext)
                 val extensionsManagerFuture = ExtensionsManager.getInstanceAsync(mContext, it)
                 extensionsManagerFuture.addListener({
                     mExtensionsManager = extensionsManagerFuture.get()

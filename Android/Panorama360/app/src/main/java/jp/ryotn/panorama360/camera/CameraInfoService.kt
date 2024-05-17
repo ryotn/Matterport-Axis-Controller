@@ -7,12 +7,8 @@ import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraExtensionCharacteristics
 import android.hardware.camera2.CameraManager
 import android.util.Log
-import androidx.camera.core.CameraInfo
 
 object CameraInfoService {
-    // フロント
-    private const val KEY_FRONT = "KEY_FRONT"
-
     // 望遠
     private const val KEY_TELEPHOTO = "KEY_TELEPHOTO"
 
@@ -26,7 +22,7 @@ object CameraInfoService {
 
     @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
     @SuppressLint("RestrictedApi")
-    fun initService(cameraInfoList: List<CameraInfo>, context: Context) {
+    fun initService(context: Context) {
         if (mSortedCameraInfoMap != null) return
         mSortedCameraInfoMap = mutableMapOf()
 

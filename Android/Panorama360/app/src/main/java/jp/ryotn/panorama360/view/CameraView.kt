@@ -8,11 +8,9 @@ import jp.ryotn.panorama360.model.MainViewModel
 
 
 internal class CameraView(context: Context) : TextureView(context), SurfaceTextureListener {
-    private val context: Context
     private var mViewModel: MainViewModel? = null
 
     init {
-        this.context = context
         surfaceTextureListener = this
     }
 

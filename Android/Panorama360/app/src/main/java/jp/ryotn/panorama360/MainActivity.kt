@@ -91,7 +91,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    getPermission(model)
+                    GetPermission(model)
                     Contents(model = model)
                 }
             }
@@ -101,7 +101,7 @@ class MainActivity : ComponentActivity() {
 
 // Permission
 @Composable
-fun getPermission(model: MainViewModel) {
+fun GetPermission(model: MainViewModel) {
     val context = LocalContext.current
     val permissions = arrayOf(
         android.Manifest.permission.CAMERA,
@@ -233,7 +233,7 @@ fun Header(model: MainViewModel) {
             }
             IconButton(modifier = Modifier.padding(end = 24.dp,
                 top = 8.dp),
-                onClick = { /*TODO*/ }) {
+                onClick = {}) {
                 Icon(modifier = Modifier.size(48.dp),
                     painter = painterResource(id = R.drawable.settings),
                     contentDescription = "")
