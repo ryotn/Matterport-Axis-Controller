@@ -71,14 +71,12 @@ class MainActivity : ComponentActivity() {
     private val model: MainViewModel by viewModels()
 
     @SuppressLint("RestrictedApi")
-    override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
-        event?.let {
-            Log.d("MainActivity", "keycode:${it.keyCode}")
-            if (it.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
-                it.keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
-                if(it.action == KeyEvent.ACTION_UP)model.startCapture()
-                return true
-            }
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        Log.d("MainActivity", "keycode:${event.keyCode}")
+        if (event.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
+            event.keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+            if(event.action == KeyEvent.ACTION_UP)model.startCapture()
+            return true
         }
         return super.dispatchKeyEvent(event)
     }
