@@ -27,12 +27,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlin.math.round
 
-class MainViewModel(application: Application) : AndroidViewModel(application) {
+class MainViewModel(private val application: Application) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "MainViewModel"
     }
 
-    private val application: Application
     private lateinit var mDefaultPreference: SharedPreferences
     private var mCamera360Manager: Camera360Manager? = null
     private lateinit var mMatterportAxisManager: MatterportAxisManager
@@ -53,10 +52,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var isShooting: Boolean = false
     private var mShotAngleSum: Int = 0
     private var mRotationAngle: Int = 30
-
-    init {
-        this.application = application
-    }
 
     fun init(isPreview: Boolean = false) {
         if (!isPreview) {
