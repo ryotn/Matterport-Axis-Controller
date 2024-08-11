@@ -6,6 +6,7 @@
 //
 
 import AVFAudio
+import CoreMotion
 import Foundation
 import UIKit
 
@@ -41,6 +42,9 @@ class ContentViewModel: ObservableObject {
     private var mStartSound: AVAudioPlayer!
     private var mCompSound: AVAudioPlayer!
 
+    // Motion
+    private var mMotionManager: MotionManager?
+
     init(isPreview: Bool) {
         if !isPreview {
             mCameraCapture = CameraCapture(view: mPreviewView, delegate: self)
@@ -49,6 +53,7 @@ class ContentViewModel: ObservableObject {
                 isUltraWideCamera = cameraCapture.isUltraWideCameraUsable()
             }
             mMatterportAxisManager = MatterportAxisManager(delegate: self)
+            mMotionManager = MotionManager(delegate: self)
 
             if let soundStartURL = Bundle.main.url(forResource: "start", withExtension: "mp3") {
                 do {
@@ -81,6 +86,7 @@ class ContentViewModel: ObservableObject {
 
         isCapture = true
         mStartSound.play()
+        mMotionManager?.start()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.savePhoto()
@@ -90,6 +96,7 @@ class ContentViewModel: ObservableObject {
     func stopCapture() {
         mAutoRotationFlg = false
         isCapture = false
+        mMotionManager?.stop()
     }
 
     func autoRotation() {
@@ -98,11 +105,22 @@ class ContentViewModel: ObservableObject {
         }
 
         if mAngle == 0 {
-            mAutoRotationFlg = false
-            isCapture = false
+            stopCapture()
             mCompSound.play()
         } else if mAngle % mAutoRotationAngle == 0 {
-            if !isSavePhoto, mReceiveAngleDate.timeIntervalSince(mSendAngleDate) > 0.5 {
+            var isRotationStop = mReceiveAngleDate.timeIntervalSince(mSendAngleDate) > 0.5
+
+            if PreferencesManager.shared.getUseGyro() {
+                guard let totalGyroAbs = mMotionManager?.getTotalGyroAbsHf() else {
+                    stopCapture()
+                    return
+                }
+
+                isRotationStop = totalGyroAbs < 0.01 && isRotationStop
+            }
+
+            if !isSavePhoto, isRotationStop {
+                print("start save Photo")
                 savePhoto()
             }
         }
@@ -226,4 +244,8 @@ extension ContentViewModel: CameraCapture.Delegate {
             startCapture()
         }
     }
+}
+
+extension ContentViewModel: MotionManager.Delegate {
+    func updateGyroData(gyro _: CMGyroData, totalAbs _: Double) {}
 }
