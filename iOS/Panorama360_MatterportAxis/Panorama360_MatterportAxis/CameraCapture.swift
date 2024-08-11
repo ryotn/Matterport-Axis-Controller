@@ -100,6 +100,10 @@ extension CameraCapture {
         setFocus(position: 0.8)
     }
 
+    func isUltraWideCameraUsable() -> Bool {
+        mUltraWideCamera != nil
+    }
+
     func changeCamera(type: CameraType, focus: Float) {
         let oldDeviceInput = mCaptureSession.inputs[0]
 

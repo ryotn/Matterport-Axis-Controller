@@ -35,6 +35,7 @@ class ContentViewModel: ObservableObject {
     @Published var mExposureBracketMode = 3
     @Published var mCameraType: CameraType = .normal
     @Published var isCapture = false
+    @Published var isUltraWideCamera = false
 
     // Sound
     private var mStartSound: AVAudioPlayer!
@@ -44,6 +45,9 @@ class ContentViewModel: ObservableObject {
         if !isPreview {
             mCameraCapture = CameraCapture(view: mPreviewView, delegate: self)
             mCameraCapture?.initVolumeView()
+            if let cameraCapture = mCameraCapture {
+                isUltraWideCamera = cameraCapture.isUltraWideCameraUsable()
+            }
             mMatterportAxisManager = MatterportAxisManager(delegate: self)
 
             if let soundStartURL = Bundle.main.url(forResource: "start", withExtension: "mp3") {
@@ -111,6 +115,10 @@ class ContentViewModel: ObservableObject {
     }
 
     func changeLens() {
+        guard isUltraWideCamera else {
+            showToast(msg: "お使いの端末には超広角レンズが搭載されていません。")
+            return
+        }
         mCameraType = mCameraType == .normal ? CameraType.wide : CameraType.normal
 
         if mCameraType == .normal {
