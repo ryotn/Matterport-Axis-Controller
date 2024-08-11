@@ -25,6 +25,7 @@
 		2FE8552E2C687FBB0095A1A8 /* MotionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FE8552D2C687FBB0095A1A8 /* MotionManager.swift */; };
 		2FE855302C68E1E60095A1A8 /* SettingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FE8552F2C68E1E60095A1A8 /* SettingViewModel.swift */; };
 		2FE855322C68E3F60095A1A8 /* PreferencesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FE855312C68E3F60095A1A8 /* PreferencesManager.swift */; };
+		2FE855342C69242E0095A1A8 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FE855332C69242E0095A1A8 /* SoundManager.swift */; };
 		9F71B01F549EF8601F7EAF36 /* Pods_Panorama360_MatterportAxis.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EEF961A97A2CAF9A3B35C0A2 /* Pods_Panorama360_MatterportAxis.framework */; };
 /* End PBXBuildFile section */
 
@@ -49,6 +50,7 @@
 		2FE8552D2C687FBB0095A1A8 /* MotionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionManager.swift; sourceTree = "<group>"; };
 		2FE8552F2C68E1E60095A1A8 /* SettingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingViewModel.swift; sourceTree = "<group>"; };
 		2FE855312C68E3F60095A1A8 /* PreferencesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesManager.swift; sourceTree = "<group>"; };
+		2FE855332C69242E0095A1A8 /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
 		EA1FE7461DD249DBFDE217A3 /* Pods-Panorama360_MatterportAxis.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Panorama360_MatterportAxis.debug.xcconfig"; path = "Target Support Files/Pods-Panorama360_MatterportAxis/Pods-Panorama360_MatterportAxis.debug.xcconfig"; sourceTree = "<group>"; };
 		EEF961A97A2CAF9A3B35C0A2 /* Pods_Panorama360_MatterportAxis.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Panorama360_MatterportAxis.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		FCAB2223B5D7DDD95A5EB0A4 /* Pods-Panorama360_MatterportAxis.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Panorama360_MatterportAxis.release.xcconfig"; path = "Target Support Files/Pods-Panorama360_MatterportAxis/Pods-Panorama360_MatterportAxis.release.xcconfig"; sourceTree = "<group>"; };
@@ -92,6 +94,7 @@
 			children = (
 				2F478A5429FE2CE700D04C34 /* start.mp3 */,
 				2F478A5529FE2CE700D04C34 /* comp.mp3 */,
+				2FE855332C69242E0095A1A8 /* SoundManager.swift */,
 			);
 			path = sound;
 			sourceTree = "<group>";
@@ -274,6 +277,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2FE855322C68E3F60095A1A8 /* PreferencesManager.swift in Sources */,
+				2FE855342C69242E0095A1A8 /* SoundManager.swift in Sources */,
 				2FBA53F22BAF00E00068A863 /* ToastView.swift in Sources */,
 				2FE855302C68E1E60095A1A8 /* SettingViewModel.swift in Sources */,
 				2FE8552E2C687FBB0095A1A8 /* MotionManager.swift in Sources */,

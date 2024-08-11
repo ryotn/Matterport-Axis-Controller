@@ -39,8 +39,7 @@ class ContentViewModel: ObservableObject {
     @Published var isUltraWideCamera = false
 
     // Sound
-    private var mStartSound: AVAudioPlayer!
-    private var mCompSound: AVAudioPlayer!
+    private var mSoundManager: SoundManager?
 
     // Motion
     private var mMotionManager: MotionManager?
@@ -54,21 +53,7 @@ class ContentViewModel: ObservableObject {
             }
             mMatterportAxisManager = MatterportAxisManager(delegate: self)
             mMotionManager = MotionManager(delegate: self)
-
-            if let soundStartURL = Bundle.main.url(forResource: "start", withExtension: "mp3") {
-                do {
-                    mStartSound = try AVAudioPlayer(contentsOf: soundStartURL)
-                } catch {
-                    print("Sound Loading error")
-                }
-            }
-            if let soundCompURL = Bundle.main.url(forResource: "comp", withExtension: "mp3") {
-                do {
-                    mCompSound = try AVAudioPlayer(contentsOf: soundCompURL)
-                } catch {
-                    print("Sound Loading error")
-                }
-            }
+            mSoundManager = SoundManager()
         }
     }
 
@@ -85,7 +70,7 @@ class ContentViewModel: ObservableObject {
         }
 
         isCapture = true
-        mStartSound.play()
+        mSoundManager?.playStart()
         mMotionManager?.start()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -106,7 +91,7 @@ class ContentViewModel: ObservableObject {
 
         if mAngle == 0 {
             stopCapture()
-            mCompSound.play()
+            mSoundManager?.playComp()
         } else if mAngle % mAutoRotationAngle == 0 {
             var isRotationStop = mReceiveAngleDate.timeIntervalSince(mSendAngleDate) > 0.5
 
