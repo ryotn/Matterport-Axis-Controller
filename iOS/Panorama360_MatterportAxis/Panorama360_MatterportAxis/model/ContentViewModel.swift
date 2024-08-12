@@ -6,6 +6,7 @@
 //
 
 import AVFAudio
+import CoreMotion
 import Foundation
 import UIKit
 
@@ -38,8 +39,10 @@ class ContentViewModel: ObservableObject {
     @Published var isUltraWideCamera = false
 
     // Sound
-    private var mStartSound: AVAudioPlayer!
-    private var mCompSound: AVAudioPlayer!
+    private var mSoundManager: SoundManager?
+
+    // Motion
+    private var mMotionManager: MotionManager?
 
     init(isPreview: Bool) {
         if !isPreview {
@@ -49,21 +52,8 @@ class ContentViewModel: ObservableObject {
                 isUltraWideCamera = cameraCapture.isUltraWideCameraUsable()
             }
             mMatterportAxisManager = MatterportAxisManager(delegate: self)
-
-            if let soundStartURL = Bundle.main.url(forResource: "start", withExtension: "mp3") {
-                do {
-                    mStartSound = try AVAudioPlayer(contentsOf: soundStartURL)
-                } catch {
-                    print("Sound Loading error")
-                }
-            }
-            if let soundCompURL = Bundle.main.url(forResource: "comp", withExtension: "mp3") {
-                do {
-                    mCompSound = try AVAudioPlayer(contentsOf: soundCompURL)
-                } catch {
-                    print("Sound Loading error")
-                }
-            }
+            mMotionManager = MotionManager(delegate: self)
+            mSoundManager = SoundManager()
         }
     }
 
@@ -80,7 +70,8 @@ class ContentViewModel: ObservableObject {
         }
 
         isCapture = true
-        mStartSound.play()
+        mSoundManager?.playStart()
+        mMotionManager?.start()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.savePhoto()
@@ -90,6 +81,7 @@ class ContentViewModel: ObservableObject {
     func stopCapture() {
         mAutoRotationFlg = false
         isCapture = false
+        mMotionManager?.stop()
     }
 
     func autoRotation() {
@@ -98,11 +90,22 @@ class ContentViewModel: ObservableObject {
         }
 
         if mAngle == 0 {
-            mAutoRotationFlg = false
-            isCapture = false
-            mCompSound.play()
+            stopCapture()
+            mSoundManager?.playComp()
         } else if mAngle % mAutoRotationAngle == 0 {
-            if !isSavePhoto, mReceiveAngleDate.timeIntervalSince(mSendAngleDate) > 0.5 {
+            var isRotationStop = mReceiveAngleDate.timeIntervalSince(mSendAngleDate) > 0.5
+
+            if PreferencesManager.shared.getUseGyro() {
+                guard let totalGyroAbs = mMotionManager?.getTotalGyroAbsHf() else {
+                    stopCapture()
+                    return
+                }
+
+                isRotationStop = totalGyroAbs < 0.01 && isRotationStop
+            }
+
+            if !isSavePhoto, isRotationStop {
+                print("start save Photo")
                 savePhoto()
             }
         }
@@ -226,4 +229,8 @@ extension ContentViewModel: CameraCapture.Delegate {
             startCapture()
         }
     }
+}
+
+extension ContentViewModel: MotionManager.Delegate {
+    func updateGyroData(gyro _: CMGyroData, totalAbs _: Double) {}
 }

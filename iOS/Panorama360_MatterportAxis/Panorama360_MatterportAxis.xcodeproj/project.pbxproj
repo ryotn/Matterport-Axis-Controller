@@ -22,6 +22,10 @@
 		2FBA53F02BAEF33A0068A863 /* SettingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FBA53EF2BAEF33A0068A863 /* SettingView.swift */; };
 		2FBA53F22BAF00E00068A863 /* ToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FBA53F12BAF00E00068A863 /* ToastView.swift */; };
 		2FBA53F42BAF11300068A863 /* PreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FBA53F32BAF11300068A863 /* PreviewView.swift */; };
+		2FE8552E2C687FBB0095A1A8 /* MotionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FE8552D2C687FBB0095A1A8 /* MotionManager.swift */; };
+		2FE855302C68E1E60095A1A8 /* SettingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FE8552F2C68E1E60095A1A8 /* SettingViewModel.swift */; };
+		2FE855322C68E3F60095A1A8 /* PreferencesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FE855312C68E3F60095A1A8 /* PreferencesManager.swift */; };
+		2FE855342C69242E0095A1A8 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FE855332C69242E0095A1A8 /* SoundManager.swift */; };
 		9F71B01F549EF8601F7EAF36 /* Pods_Panorama360_MatterportAxis.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EEF961A97A2CAF9A3B35C0A2 /* Pods_Panorama360_MatterportAxis.framework */; };
 /* End PBXBuildFile section */
 
@@ -43,6 +47,10 @@
 		2FBA53EF2BAEF33A0068A863 /* SettingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingView.swift; sourceTree = "<group>"; };
 		2FBA53F12BAF00E00068A863 /* ToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastView.swift; sourceTree = "<group>"; };
 		2FBA53F32BAF11300068A863 /* PreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewView.swift; sourceTree = "<group>"; };
+		2FE8552D2C687FBB0095A1A8 /* MotionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionManager.swift; sourceTree = "<group>"; };
+		2FE8552F2C68E1E60095A1A8 /* SettingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingViewModel.swift; sourceTree = "<group>"; };
+		2FE855312C68E3F60095A1A8 /* PreferencesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesManager.swift; sourceTree = "<group>"; };
+		2FE855332C69242E0095A1A8 /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
 		EA1FE7461DD249DBFDE217A3 /* Pods-Panorama360_MatterportAxis.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Panorama360_MatterportAxis.debug.xcconfig"; path = "Target Support Files/Pods-Panorama360_MatterportAxis/Pods-Panorama360_MatterportAxis.debug.xcconfig"; sourceTree = "<group>"; };
 		EEF961A97A2CAF9A3B35C0A2 /* Pods_Panorama360_MatterportAxis.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Panorama360_MatterportAxis.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		FCAB2223B5D7DDD95A5EB0A4 /* Pods-Panorama360_MatterportAxis.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Panorama360_MatterportAxis.release.xcconfig"; path = "Target Support Files/Pods-Panorama360_MatterportAxis/Pods-Panorama360_MatterportAxis.release.xcconfig"; sourceTree = "<group>"; };
@@ -64,6 +72,7 @@
 			isa = PBXGroup;
 			children = (
 				2FBA53EB2BADCEFC0068A863 /* ContentViewModel.swift */,
+				2FE8552F2C68E1E60095A1A8 /* SettingViewModel.swift */,
 			);
 			path = model;
 			sourceTree = "<group>";
@@ -85,6 +94,7 @@
 			children = (
 				2F478A5429FE2CE700D04C34 /* start.mp3 */,
 				2F478A5529FE2CE700D04C34 /* comp.mp3 */,
+				2FE855332C69242E0095A1A8 /* SoundManager.swift */,
 			);
 			path = sound;
 			sourceTree = "<group>";
@@ -114,11 +124,13 @@
 				2F293B112BADCE4800748B91 /* model */,
 				2F478A5329FE2CE700D04C34 /* sound */,
 				2F293B0D2BADC8ED00748B91 /* Panorama360App.swift */,
+				2FE8552D2C687FBB0095A1A8 /* MotionManager.swift */,
 				2F4A976A295485860038FD77 /* MatterportAxisManager.swift */,
 				2F4A976E295ECB7D0038FD77 /* FileSaveManager.swift */,
 				2F4A976C295EBA880038FD77 /* CameraCapture.swift */,
 				2F4A97522954776A0038FD77 /* AppDelegate.swift */,
 				2F4A97542954776A0038FD77 /* SceneDelegate.swift */,
+				2FE855312C68E3F60095A1A8 /* PreferencesManager.swift */,
 				2F4A975B2954776C0038FD77 /* Assets.xcassets */,
 				2F4A97602954776C0038FD77 /* Info.plist */,
 			);
@@ -264,7 +276,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2FE855322C68E3F60095A1A8 /* PreferencesManager.swift in Sources */,
+				2FE855342C69242E0095A1A8 /* SoundManager.swift in Sources */,
 				2FBA53F22BAF00E00068A863 /* ToastView.swift in Sources */,
+				2FE855302C68E1E60095A1A8 /* SettingViewModel.swift in Sources */,
+				2FE8552E2C687FBB0095A1A8 /* MotionManager.swift in Sources */,
 				2F293B0E2BADC8ED00748B91 /* Panorama360App.swift in Sources */,
 				2F4A976F295ECB7D0038FD77 /* FileSaveManager.swift in Sources */,
 				2F4A976B295485860038FD77 /* MatterportAxisManager.swift in Sources */,
@@ -425,6 +441,7 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -463,6 +480,7 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

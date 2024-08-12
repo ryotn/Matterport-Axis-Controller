@@ -141,7 +141,7 @@ struct ContentView: View {
                 }
             }
         }
-        .onChange(of: scenePhase) { newPhase in
+        .onChange(of: scenePhase) { _, newPhase in
             switch newPhase {
             case .active:
                 model.setInitalVolume()
