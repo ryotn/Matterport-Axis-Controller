@@ -260,12 +260,12 @@ fun Header(model: MainViewModel) {
 @Composable
 fun Footer(model: MainViewModel) {
     val context = LocalContext.current
-    var exposureBracketModeLabel by remember { mutableStateOf(context.getString(R.string.exposure_bracket_mode_none)) }
     var cameraLabel by remember { mutableStateOf(context.getString(R.string.wide)) }
     val angle: Int by model.mAngle.collectAsState()
     val isUltraWide: Boolean by model.isUltraWide.collectAsState()
     val isConnect: Boolean by model.isConnect.collectAsState()
     val exposureBracketModeList: List<String> by model.mExposureBracketModeList.collectAsState()
+    val exposureBracketModeLabel: String by model.mExposureBracketModeLabel.collectAsState()
     Column {
         Row(modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -283,8 +283,6 @@ fun Footer(model: MainViewModel) {
                 selectedItem = exposureBracketModeLabel,
                 onItemSelected = {
                     model.setExposureBracketMode(it)
-                    exposureBracketModeLabel =
-                        exposureBracketModeList[model.mExposureBracketMode]
                 },
                 selectedItemFactory = { modifier, item ->
                     Row(

@@ -31,6 +31,7 @@ import kotlin.math.round
 class MainViewModel(private val application: Application) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "MainViewModel"
+        private const val KEY_EXPOSURE_BRACKET_MODE = "ExposureBracketMode"
     }
 
     private lateinit var mDefaultPreference: SharedPreferences
@@ -42,6 +43,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     val mFocus: MutableStateFlow<Float> = MutableStateFlow(0.4f) //プレビュー用のダミー
     var mExposureBracketModeList: MutableStateFlow<List<String>> = MutableStateFlow(listOf("")) //プレビュー用のダミー
     var mExposureBracketMode = 0
+    var mExposureBracketModeLabel: MutableStateFlow<String> = MutableStateFlow("")
     val isConnect: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val mAngle: MutableStateFlow<Int> = MutableStateFlow(0)
     val isPermission: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -89,7 +91,9 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
     fun setExposureBracketMode(mode: Int) {
         mExposureBracketMode = mode
+        mExposureBracketModeLabel.value = mExposureBracketModeList.value[mode]
         mCamera360Manager?.setExposureBracketMode(mode)
+        putPreferenceInt(KEY_EXPOSURE_BRACKET_MODE, mExposureBracketMode)
     }
 
     fun setFocus(f: Float) {
@@ -185,6 +189,16 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         }
     }
 
+    fun putPreferenceInt(key: String, value: Int) {
+        mDefaultPreference.edit {
+            putInt(key, value)
+        }
+    }
+
+    fun getPreferenceInt(key: String, defaultValue: Int): Int {
+        return mDefaultPreference.getInt(key, defaultValue)
+    }
+
     fun isFilePermission(): Boolean {
         return !mDefaultPreference.getString("uri", null).isNullOrEmpty()
     }
@@ -259,6 +273,9 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             }
 
             mExposureBracketModeList.value = itemArray
+
+            val mode = getPreferenceInt(KEY_EXPOSURE_BRACKET_MODE, 0)
+            setExposureBracketMode(mode = mode)
         }
 
         override fun takePhotoSuccess() {
