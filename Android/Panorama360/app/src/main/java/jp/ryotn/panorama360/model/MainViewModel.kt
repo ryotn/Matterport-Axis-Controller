@@ -18,6 +18,7 @@ import androidx.preference.PreferenceManager
 import jp.ryotn.panorama360.camera.Camera360Manager
 import jp.ryotn.panorama360.camera.CameraInfoService
 import jp.ryotn.panorama360.MatterportAxisManager
+import jp.ryotn.panorama360.MotionManager
 import jp.ryotn.panorama360.R
 import jp.ryotn.panorama360.SoundPlayer
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -36,6 +37,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     private var mCamera360Manager: Camera360Manager? = null
     private lateinit var mMatterportAxisManager: MatterportAxisManager
     private lateinit var mSoundPlayer: SoundPlayer
+    private lateinit var mMotionManager: MotionManager
 
     val mFocus: MutableStateFlow<Float> = MutableStateFlow(0.4f) //プレビュー用のダミー
     var mExposureBracketModeList: MutableStateFlow<List<String>> = MutableStateFlow(listOf("")) //プレビュー用のダミー
@@ -59,6 +61,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             mDefaultPreference = PreferenceManager.getDefaultSharedPreferences(application)
             mMatterportAxisManager = MatterportAxisManager(context = application)
             mSoundPlayer = SoundPlayer(context = application)
+            mMotionManager = MotionManager(context = application)
 
             mMatterportAxisManager.mListener = mMatterportAxisManagerListener
         }
@@ -123,6 +126,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         }
 
         if (isShooting) return
+        mMotionManager.start()
         mSoundPlayer.playStartSound()
         mShotAngleSum = mRotationAngle
         Handler(Looper.getMainLooper()).postDelayed({
@@ -216,10 +220,12 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             GlobalScope.launch(Dispatchers.Main) {
                 mAngle.value = mMatterportAxisManager.getAngle()
                 if (isShooting) {
+                    val isRotationStop = mMotionManager.getTotalGyroAbsHf() < 0.01
                     if (mShotAngleSum >= 360 && mAngle.value == 0) {
                         isShooting = false
                         mSoundPlayer.playCompSound()
-                    } else if (mAngle.value == mShotAngleSum) {
+                        mMotionManager.stop()
+                    } else if (mAngle.value == mShotAngleSum && isRotationStop) {
                         mShotAngleSum += mRotationAngle
                         mCamera360Manager?.takePhoto()
                     }
