@@ -33,14 +33,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -62,13 +68,22 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import jp.ryotn.panorama360.model.MainViewModel
+import jp.ryotn.panorama360.model.SettingViewModel
 import jp.ryotn.panorama360.ui.theme.Panorama360Theme
 import jp.ryotn.panorama360.view.CameraView
+import jp.ryotn.panorama360.view.Setting
+import jp.ryotn.panorama360.view.ui.theme.topAppBarContainerColor
 import kotlinx.coroutines.flow.asStateFlow
 
 class MainActivity : ComponentActivity() {
     private val model: MainViewModel by viewModels()
+    private val settingModel: SettingViewModel by viewModels()
 
     @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
@@ -84,6 +99,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         model.init()
+        settingModel.init()
         setContent {
             Panorama360Theme {
                 KeepScreenOn()
@@ -92,7 +108,8 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     GetPermission(model)
-                    Contents(model = model)
+                    Contents(model = model,
+                        settingModel = settingModel)
                 }
             }
         }
@@ -174,38 +191,77 @@ fun GetPermission(model: MainViewModel) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Contents(model: MainViewModel) {
+fun Contents(model: MainViewModel, settingModel: SettingViewModel) {
     val isPermission: Boolean by model.isPermission.collectAsState()
     val context = LocalContext.current
-    Column {
-        Header(model = model)
+    val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
 
-        Row(horizontalArrangement = Arrangement.SpaceBetween) {
-            if (isPermission) {
-                AndroidView(
-                    modifier = Modifier
-                        .weight(1.0f)
-                        .aspectRatio(0.75f)
-                        .background(Color.Cyan),
-                    factory = {
-                        val cameraView = CameraView(context).apply {
-                            layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
+    Scaffold(
+        topBar = {
+            if (navBackStackEntry?.destination?.route == Route.SETTING.Name) {
+                TopAppBar(
+                    title = {
+                        Box() { Text(text = Route.SETTING.Name) }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.topAppBarContainerColor),
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            navController.popBackStack()
+                        }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                                contentDescription = "Back"
+                            )
                         }
-                        cameraView.setModel(model)
-                        cameraView
                     }
                 )
             }
         }
+    ) { padding ->
+        NavHost(navController = navController,
+            startDestination = Route.HOME.Name,
+            modifier = Modifier.padding(padding)
+        ) {
+            composable(route = Route.HOME.Name) {
+                Column {
+                    Header(model = model, navController)
 
-        Spacer(modifier = Modifier.weight(1.0f))
-        Footer(model = model)
+                    Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                        if (isPermission) {
+                            AndroidView(
+                                modifier = Modifier
+                                    .weight(1.0f)
+                                    .aspectRatio(0.75f)
+                                    .background(Color.Cyan),
+                                factory = {
+                                    val cameraView = CameraView(context).apply {
+                                        layoutParams =
+                                            FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
+                                    }
+                                    cameraView.setModel(model)
+                                    cameraView
+                                }
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.weight(1.0f))
+                    Footer(model = model)
+                }
+            }
+
+            composable(route = Route.SETTING.Name) {
+                Setting(model = settingModel)
+            }
+        }
     }
 }
 
 @Composable
-fun Header(model: MainViewModel) {
+fun Header(model: MainViewModel, navController: NavController) {
     val focus: Float by model.mFocus.asStateFlow().collectAsState()
     val isConnect: Boolean by model.isConnect.collectAsState()
     Column {
@@ -233,7 +289,9 @@ fun Header(model: MainViewModel) {
             }
             IconButton(modifier = Modifier.padding(end = 24.dp,
                 top = 8.dp),
-                onClick = {}) {
+                onClick = {
+                    navController.navigate(route = Route.SETTING.Name)
+                }) {
                 Icon(modifier = Modifier.size(48.dp),
                     painter = painterResource(id = R.drawable.settings),
                     contentDescription = "")
@@ -463,7 +521,13 @@ fun Context.findActivity(): Activity? {
 @Composable
 fun ContentsPreview() {
     val model = MainViewModel(Application())
+    val settingModel = SettingViewModel(Application())
     Panorama360Theme {
-        Contents(model = model)
+        Contents(model = model, settingModel = settingModel)
     }
+}
+
+private enum class Route(val Name: String) {
+    HOME("Home"),
+    SETTING("Setting");
 }
