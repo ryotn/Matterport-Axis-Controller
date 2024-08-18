@@ -11,4 +11,5 @@
     <string name="wide">Wide</string>
     <string name="ultra_wide">Ultra Wide</string>
     <string name="exposure_bracket_mode_none">None</string>
+    <string name="title_activity_setting_view">SettingView</string>
 </resources>

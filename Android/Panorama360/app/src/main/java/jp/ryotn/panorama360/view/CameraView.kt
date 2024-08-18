@@ -7,7 +7,7 @@ import android.view.TextureView.SurfaceTextureListener
 import jp.ryotn.panorama360.model.MainViewModel
 
 
-internal class CameraView(context: Context) : TextureView(context), SurfaceTextureListener {
+class CameraView(context: Context) : TextureView(context), SurfaceTextureListener {
     private var mViewModel: MainViewModel? = null
 
     init {
@@ -28,6 +28,7 @@ internal class CameraView(context: Context) : TextureView(context), SurfaceTextu
 
     override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {}
     override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
+        mViewModel?.stopCamera()
         return false
     }
 
