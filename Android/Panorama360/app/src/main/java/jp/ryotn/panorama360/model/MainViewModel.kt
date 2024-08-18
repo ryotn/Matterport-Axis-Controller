@@ -36,10 +36,8 @@ import kotlin.math.round
 class MainViewModel(private val application: Application) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "MainViewModel"
-        private const val KEY_EXPOSURE_BRACKET_MODE = "ExposureBracketMode"
     }
 
-    private lateinit var mDefaultPreference: SharedPreferences
     private lateinit var mPreferencesManager: PreferencesManager
     private var mCamera360Manager: Camera360Manager? = null
     private lateinit var mMatterportAxisManager: MatterportAxisManager
@@ -67,7 +65,6 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     fun init(isPreview: Boolean = false) {
         if (!isPreview) {
             mFocus.value = application.getString(R.string.default_focus_distance).toFloat()
-            mDefaultPreference = PreferenceManager.getDefaultSharedPreferences(application)
             mPreferencesManager = PreferencesManager
             mPreferencesManager.setUp(application.applicationContext)
             mMatterportAxisManager = MatterportAxisManager(context = application)
@@ -122,7 +119,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         mExposureBracketMode = mode
         mExposureBracketModeLabel.value = mExposureBracketModeList.value[mode]
         mCamera360Manager?.setExposureBracketMode(mode)
-        putPreferenceInt(KEY_EXPOSURE_BRACKET_MODE, mExposureBracketMode)
+        mPreferencesManager.putExposureBracketMode(mExposureBracketMode)
     }
 
     fun setFocus(f: Float) {
@@ -175,7 +172,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     }
 
     private fun setFilePath() {
-        val uriStr = mDefaultPreference.getString("uri", null)
+        val uriStr = mPreferencesManager.getSaveDirPth()
         if (uriStr.isNullOrEmpty()) {
             showToast("保存先へのpermissionが取れてないよ")
         } else {
@@ -212,24 +209,12 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         mMatterportAxisManager.resetAngle()
     }
 
-    fun putPreferenceString(key: String, value: String) {
-        mDefaultPreference.edit {
-            putString(key, value)
-        }
-    }
-
-    fun putPreferenceInt(key: String, value: Int) {
-        mDefaultPreference.edit {
-            putInt(key, value)
-        }
-    }
-
-    fun getPreferenceInt(key: String, defaultValue: Int): Int {
-        return mDefaultPreference.getInt(key, defaultValue)
+    fun setSaveDirPath(value: String) {
+        mPreferencesManager.putSaveDirPath(value)
     }
 
     fun isFilePermission(): Boolean {
-        return !mDefaultPreference.getString("uri", null).isNullOrEmpty()
+        return !mPreferencesManager.getSaveDirPth().isNullOrEmpty()
     }
 
     fun setViewFinder(textureView: TextureView) {
@@ -306,7 +291,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
             mExposureBracketModeList.value = itemArray
 
-            val mode = getPreferenceInt(KEY_EXPOSURE_BRACKET_MODE, 0)
+            val mode = mPreferencesManager.getExposureBracketMode()
             setExposureBracketMode(mode = mode)
         }
 

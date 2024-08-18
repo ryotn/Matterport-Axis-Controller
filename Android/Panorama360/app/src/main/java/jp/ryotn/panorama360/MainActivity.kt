@@ -134,7 +134,7 @@ fun GetPermission(model: MainViewModel) {
                     Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 )
 
-                model.putPreferenceString("uri", uri.toString())
+                model.setSaveDirPath(uri.toString())
                 isDirectoryPermissionCheck = model.isFilePermission()
                 model.isPermission.value = true
             }
