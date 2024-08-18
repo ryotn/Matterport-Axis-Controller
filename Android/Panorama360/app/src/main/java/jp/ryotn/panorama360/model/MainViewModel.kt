@@ -9,6 +9,8 @@ import android.os.Looper
 import android.util.Log
 import android.util.Range
 import android.view.TextureView
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.core.content.edit
 import androidx.core.net.toUri
@@ -22,6 +24,7 @@ import jp.ryotn.panorama360.MotionManager
 import jp.ryotn.panorama360.PreferencesManager
 import jp.ryotn.panorama360.R
 import jp.ryotn.panorama360.SoundPlayer
+import jp.ryotn.panorama360.view.CameraView
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -29,6 +32,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlin.math.round
 
+@SuppressLint("StaticFieldLeak")
 class MainViewModel(private val application: Application) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "MainViewModel"
@@ -52,8 +56,9 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     val isUltraWide: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     private var mSelectedCameraInfo: CameraInfoService.ExtendedCameraInfo? = null
-    @SuppressLint("StaticFieldLeak")
+
     private var mViewFinder: TextureView? =null
+    lateinit var mCameraView: CameraView
 
     private var isShooting: Boolean = false
     private var mShotAngleSum: Int = 0
@@ -68,6 +73,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             mMatterportAxisManager = MatterportAxisManager(context = application)
             mSoundPlayer = SoundPlayer(context = application)
             mMotionManager = MotionManager(context = application)
+            initCameraView()
 
             mMatterportAxisManager.mListener = mMatterportAxisManagerListener
         }
@@ -76,6 +82,10 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     fun onDestroy() {
         mCamera360Manager?.stopCamera()
         mMatterportAxisManager.disconnect()
+    }
+
+    fun stopCamera() {
+        mCamera360Manager?.stopCamera()
     }
 
     fun initCamera360Manager() {
@@ -87,10 +97,25 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         }
 
         if (isPermission.value) {
-            CameraInfoService.getWideRangeCameraInfo()?.let {
+            mSelectedCameraInfo?.let {
                 changeCamera(it)
+            } ?: run {
+                CameraInfoService.getWideRangeCameraInfo()?.let {
+                    changeCamera(it)
+                }
             }
         }
+    }
+
+    fun initCameraView() {
+        mCameraView = CameraView(application.applicationContext).apply {
+            layoutParams =
+                FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+        }
+        mCameraView.setModel(this)
     }
 
     fun setExposureBracketMode(mode: Int) {

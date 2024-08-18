@@ -10,9 +10,7 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.WindowManager
-import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -56,7 +54,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
@@ -76,8 +73,8 @@ import androidx.navigation.compose.rememberNavController
 import jp.ryotn.panorama360.model.MainViewModel
 import jp.ryotn.panorama360.model.SettingViewModel
 import jp.ryotn.panorama360.ui.theme.Panorama360Theme
-import jp.ryotn.panorama360.view.CameraView
 import jp.ryotn.panorama360.view.Setting
+import jp.ryotn.panorama360.view.ui.theme.cameraViewBackgroundColor
 import jp.ryotn.panorama360.view.ui.theme.topAppBarContainerColor
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -195,16 +192,15 @@ fun GetPermission(model: MainViewModel) {
 @Composable
 fun Contents(model: MainViewModel, settingModel: SettingViewModel) {
     val isPermission: Boolean by model.isPermission.collectAsState()
-    val context = LocalContext.current
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
 
     Scaffold(
         topBar = {
-            if (navBackStackEntry?.destination?.route == Route.SETTING.Name) {
+            if (navBackStackEntry?.destination?.route == Route.SETTING.displayName) {
                 TopAppBar(
                     title = {
-                        Box() { Text(text = Route.SETTING.Name) }
+                        Box { Text(text = Route.SETTING.displayName) }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.topAppBarContainerColor),
                     navigationIcon = {
@@ -222,27 +218,23 @@ fun Contents(model: MainViewModel, settingModel: SettingViewModel) {
         }
     ) { padding ->
         NavHost(navController = navController,
-            startDestination = Route.HOME.Name,
+            startDestination = Route.HOME.displayName,
             modifier = Modifier.padding(padding)
         ) {
-            composable(route = Route.HOME.Name) {
+            composable(route = Route.HOME.displayName) {
                 Column {
                     Header(model = model, navController)
 
                     Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                        if (isPermission) {
+                        if (isPermission && navBackStackEntry?.destination?.route == Route.HOME.displayName) {
                             AndroidView(
                                 modifier = Modifier
                                     .weight(1.0f)
                                     .aspectRatio(0.75f)
-                                    .background(Color.Cyan),
+                                    .background(MaterialTheme.colorScheme.cameraViewBackgroundColor),
                                 factory = {
-                                    val cameraView = CameraView(context).apply {
-                                        layoutParams =
-                                            FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
-                                    }
-                                    cameraView.setModel(model)
-                                    cameraView
+                                    model.initCameraView()
+                                    model.mCameraView
                                 }
                             )
                         }
@@ -253,7 +245,7 @@ fun Contents(model: MainViewModel, settingModel: SettingViewModel) {
                 }
             }
 
-            composable(route = Route.SETTING.Name) {
+            composable(route = Route.SETTING.displayName) {
                 Setting(model = settingModel)
             }
         }
@@ -290,7 +282,7 @@ fun Header(model: MainViewModel, navController: NavController) {
             IconButton(modifier = Modifier.padding(end = 24.dp,
                 top = 8.dp),
                 onClick = {
-                    navController.navigate(route = Route.SETTING.Name)
+                    navController.navigate(route = Route.SETTING.displayName)
                 }) {
                 Icon(modifier = Modifier.size(48.dp),
                     painter = painterResource(id = R.drawable.settings),
@@ -527,7 +519,7 @@ fun ContentsPreview() {
     }
 }
 
-private enum class Route(val Name: String) {
+private enum class Route(val displayName: String) {
     HOME("Home"),
     SETTING("Setting");
 }

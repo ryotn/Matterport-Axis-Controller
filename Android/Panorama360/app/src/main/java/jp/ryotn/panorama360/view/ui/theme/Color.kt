@@ -17,3 +17,7 @@ fun ColorScheme.isLight() = this.background.luminance() > 0.5
 val ColorScheme.topAppBarContainerColor: Color get() {
     return if (isLight()) Color.LightGray else Color.DarkGray
 }
+
+val ColorScheme.cameraViewBackgroundColor: Color get() {
+    return if (isLight()) Color.LightGray else Color.DarkGray
+}
