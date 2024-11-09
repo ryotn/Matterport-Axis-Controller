@@ -45,6 +45,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     private lateinit var mMotionManager: MotionManager
 
     val mFocus: MutableStateFlow<Float> = MutableStateFlow(0.4f) //プレビュー用のダミー
+    val mFocalLength: MutableStateFlow<Float> = MutableStateFlow(32.0f) //プレビュー用のダミー
     var mExposureBracketModeList: MutableStateFlow<List<String>> = MutableStateFlow(listOf("")) //プレビュー用のダミー
     var mExposureBracketMode = 0
     var mExposureBracketModeLabel: MutableStateFlow<String> = MutableStateFlow("")
@@ -293,6 +294,10 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
             val mode = mPreferencesManager.getExposureBracketMode()
             setExposureBracketMode(mode = mode)
+
+            mCamera360Manager?.getFocalLengthIn35mm()?.let {
+                mFocalLength.value = Math.round(it * 10.0f) / 10.0f
+            }
         }
 
         override fun takePhotoSuccess() {

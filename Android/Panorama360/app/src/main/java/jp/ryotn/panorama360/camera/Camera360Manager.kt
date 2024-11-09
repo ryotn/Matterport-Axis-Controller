@@ -285,7 +285,7 @@ class Camera360Manager(context: Context) {
          mExposureBracketMode = mode
     }
 
-    private fun getFocalLengthIn35mm(): Float {
+    fun getFocalLengthIn35mm(): Float {
         val cameraCharacteristics = getCameraCharacteristic(getCurrentCameraId())
         val sensorWidth = cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE)?.width ?: 0.0F
         val focalLength = cameraCharacteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)?.get(0) ?: 0.0F
