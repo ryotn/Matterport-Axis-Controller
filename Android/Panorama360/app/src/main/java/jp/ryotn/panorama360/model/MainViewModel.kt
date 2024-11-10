@@ -3,7 +3,6 @@ package jp.ryotn.panorama360.model
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
-import android.content.SharedPreferences
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -12,11 +11,10 @@ import android.view.TextureView
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.Toast
-import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import androidx.exifinterface.media.ExifInterface
 import androidx.lifecycle.AndroidViewModel
-import androidx.preference.PreferenceManager
 import jp.ryotn.panorama360.camera.Camera360Manager
 import jp.ryotn.panorama360.camera.CameraInfoService
 import jp.ryotn.panorama360.MatterportAxisManager
@@ -71,15 +69,18 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             mMatterportAxisManager = MatterportAxisManager(context = application)
             mSoundPlayer = SoundPlayer(context = application)
             mMotionManager = MotionManager(context = application)
+            mMotionManager.start()
             initCameraView()
 
             mMatterportAxisManager.mListener = mMatterportAxisManagerListener
+            mMotionManager.mListener = mMotionManagerListener
         }
     }
 
     fun onDestroy() {
         mCamera360Manager?.stopCamera()
         mMatterportAxisManager.disconnect()
+        mMotionManager.stop()
     }
 
     fun stopCamera() {
@@ -312,4 +313,27 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
     }
 
+    private val mMotionManagerListener = object : MotionManager.MotionManagerListener {
+        override fun receivedGyro(values: FloatArray) {
+
+        }
+
+        override fun receivedGravity(values: FloatArray) {
+            val x = Math.round(values[0] * 100.0f) / 100.0f
+            val y = Math.round(values[1] * 100.0f) / 100.0f
+            val z = Math.round(values[2] * 100.0f) / 100.0f
+
+            if (z >= 9.5 || z <= -9.5) {
+                return
+            } else if (x >= 5) {
+                mCamera360Manager?.setOrientation(ExifInterface.ORIENTATION_NORMAL)
+            } else if (x <= -5) {
+                mCamera360Manager?.setOrientation(ExifInterface.ORIENTATION_ROTATE_180)
+            } else if (y >= 5) {
+                mCamera360Manager?.setOrientation(ExifInterface.ORIENTATION_ROTATE_90)
+            } else if (y <= -5) {
+                mCamera360Manager?.setOrientation(ExifInterface.ORIENTATION_ROTATE_270)
+            }
+        }
+    }
 }

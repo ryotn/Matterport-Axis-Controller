@@ -79,6 +79,7 @@ class Camera360Manager(context: Context) {
     private var mDocumentFile: DocumentFile? = null
     private var mSaveDocumentFile: DocumentFile? = null
     private var mExtensionsManager: ExtensionsManager? =null
+    private var mDeviceOrientation = ExifInterface.ORIENTATION_ROTATE_90
 
     var mListener: Camera360ManagerListener? = null
     var isStart = false
@@ -313,6 +314,10 @@ class Camera360Manager(context: Context) {
         return cameraCharacteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE) ?:0.0F
     }
 
+    fun setOrientation(orientation: Int) {
+        mDeviceOrientation = orientation
+    }
+
     fun setFocusDistance(distance: Float) {
         mFocusDistance = distance
         mPreviewRequestBuilder?.set(CaptureRequest.LENS_FOCUS_DISTANCE, mFocusDistance)
@@ -376,7 +381,7 @@ class Camera360Manager(context: Context) {
                         val exifs = arrayOf(
                             Exif(ExifInterface.TAG_FOCAL_LENGTH_IN_35MM_FILM, focalLengthIn35mm.toInt().toString()),
                             Exif(ExifInterface.TAG_USER_COMMENT, "focalLengthIn35mm:$focalLengthIn35mm"),
-                            Exif(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_ROTATE_90.toString()),
+                            Exif(ExifInterface.TAG_ORIENTATION, mDeviceOrientation.toString()),//ExifInterface.ORIENTATION_ROTATE_90.toString()),
                             Exif(ExifInterface.TAG_EXPOSURE_BIAS_VALUE, "${exposureBracketList[mExposureBracketCount]}/1"),
                             Exif(ExifInterface.TAG_EXPOSURE_MODE, ExifInterface.EXPOSURE_MODE_AUTO_BRACKET.toString()),
                         )
