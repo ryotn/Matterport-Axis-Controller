@@ -381,7 +381,7 @@ class Camera360Manager(context: Context) {
                         val exifs = arrayOf(
                             Exif(ExifInterface.TAG_FOCAL_LENGTH_IN_35MM_FILM, focalLengthIn35mm.toInt().toString()),
                             Exif(ExifInterface.TAG_USER_COMMENT, "focalLengthIn35mm:$focalLengthIn35mm"),
-                            Exif(ExifInterface.TAG_ORIENTATION, mDeviceOrientation.toString()),//ExifInterface.ORIENTATION_ROTATE_90.toString()),
+                            Exif(ExifInterface.TAG_ORIENTATION, mDeviceOrientation.toString()),
                             Exif(ExifInterface.TAG_EXPOSURE_BIAS_VALUE, "${exposureBracketList[mExposureBracketCount]}/1"),
                             Exif(ExifInterface.TAG_EXPOSURE_MODE, ExifInterface.EXPOSURE_MODE_AUTO_BRACKET.toString()),
                         )
