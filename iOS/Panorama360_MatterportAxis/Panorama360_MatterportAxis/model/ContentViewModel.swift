@@ -225,9 +225,7 @@ extension ContentViewModel: CameraCapture.Delegate {
     }
 
     func pushRemoteShutterButton() {
-        if isConnected {
-            startCapture()
-        }
+        startCapture()
     }
 }
 
