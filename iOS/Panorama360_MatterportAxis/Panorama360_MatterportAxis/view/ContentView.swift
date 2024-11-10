@@ -63,6 +63,7 @@ struct ContentView: View {
                 Spacer()
 
                 VStack {
+                    Text(String(format: "%.2f mm", model.mFocalLength))
                     HStack {
                         Spacer()
                             .overlay {

@@ -37,6 +37,7 @@ class ContentViewModel: ObservableObject {
     @Published var mCameraType: CameraType = .normal
     @Published var isCapture = false
     @Published var isUltraWideCamera = false
+    @Published var mFocalLength: Float = 0.0
 
     // Sound
     private var mSoundManager: SoundManager?
@@ -54,6 +55,8 @@ class ContentViewModel: ObservableObject {
             mMatterportAxisManager = MatterportAxisManager(delegate: self)
             mMotionManager = MotionManager(delegate: self)
             mSoundManager = SoundManager()
+
+            mMotionManager?.start()
         }
     }
 
@@ -71,7 +74,6 @@ class ContentViewModel: ObservableObject {
 
         isCapture = true
         mSoundManager?.playStart()
-        mMotionManager?.start()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.savePhoto()
@@ -81,7 +83,6 @@ class ContentViewModel: ObservableObject {
     func stopCapture() {
         mAutoRotationFlg = false
         isCapture = false
-        mMotionManager?.stop()
     }
 
     func autoRotation() {
@@ -209,6 +210,14 @@ extension ContentViewModel: MatterportAxisManager.Delegate {
 }
 
 extension ContentViewModel: CameraCapture.Delegate {
+    func onCameraChangeComplete() {
+        if let focalLength = mCameraCapture?.getFocalLength() {
+            DispatchQueue.main.async {
+                self.mFocalLength = focalLength
+            }
+        }
+    }
+
     func onSuccessCapturePhoto() {
         if mAutoRotationFlg || (!mAutoRotationFlg || mAngle != 0) {
             mMatterportAxisManager?.sendAngle(angle: UInt8(mAutoRotationAngle))
@@ -225,12 +234,32 @@ extension ContentViewModel: CameraCapture.Delegate {
     }
 
     func pushRemoteShutterButton() {
-        if isConnected {
-            startCapture()
-        }
+        startCapture()
     }
 }
 
 extension ContentViewModel: MotionManager.Delegate {
+    func updateGravityData(gravity: CMAcceleration) {
+        let x = gravity.x * 10.0
+        let y = gravity.y * 10.0
+        let z = gravity.z * 10.0
+
+        var orientation: CGImagePropertyOrientation = .up
+
+        if z >= 9.5 || z <= -9.5 {
+            return
+        } else if x >= 5 {
+            orientation = .right
+        } else if x <= -5 {
+            orientation = .left
+        } else if y >= 5 {
+            orientation = .down
+        } else if y <= -5 {
+            orientation = .up
+        }
+
+        mCameraCapture?.setDeviceOrientation(orientation: orientation)
+    }
+
     func updateGyroData(gyro _: CMGyroData, totalAbs _: Double) {}
 }

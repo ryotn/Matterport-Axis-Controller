@@ -21,6 +21,7 @@ class CameraCapture: NSObject {
     protocol Delegate {
         func onSuccessCapturePhoto()
         func pushRemoteShutterButton()
+        func onCameraChangeComplete()
     }
 
     private let EXPOSURES_VALUE: [[Float]] = [[0.0],
@@ -38,6 +39,7 @@ class CameraCapture: NSObject {
     private var mCapCount = 0
     private var mExposureMode = 3
     private var mSaveImages = [CIImage]()
+    private var mDeviceOrientation: CGImagePropertyOrientation = .right
 
     var mCaptureSession = AVCaptureSession()
 
@@ -66,6 +68,7 @@ class CameraCapture: NSObject {
 
         DispatchQueue.global(qos: .default).async {
             self.mCaptureSession.startRunning()
+            self.mDelegate?.onCameraChangeComplete()
         }
     }
 }
@@ -121,9 +124,34 @@ extension CameraCapture {
             mCaptureSession.commitConfiguration()
 
             setFocus(position: focus)
+            mDelegate?.onCameraChangeComplete()
         } catch {
             print("ChangeCamera Error")
         }
+    }
+
+    func getFocalLength() -> Float {
+        guard let device = mCurrentDevice else {
+            return 0.0
+        }
+
+        let sortDevice = device.formats.sorted { $0.videoFieldOfView > $1.videoFieldOfView }
+
+        return get35mmEquivalentFocalLength(format: sortDevice[0])
+    }
+
+    // コピペ元
+    // https://github.com/flutter/flutter/issues/119908
+    private func get35mmEquivalentFocalLength(format: AVCaptureDevice.Format) -> Float {
+        // get reported field of view. Documentation says this is the horizontal field of view
+        var fov = format.videoFieldOfView
+        // convert to radians
+        fov *= Float.pi / 180.0
+        // angle and opposite of right angle triangle are half the fov and half the width of
+        // 35mm film (ie 18mm). The adjacent value of the right angle triangle is the equivalent
+        // focal length. Using some right angle triangle math you can work out focal length
+        let focalLen = 18 / tan(fov / 2)
+        return focalLen
     }
 
     // 入出力データの設定
@@ -182,6 +210,10 @@ extension CameraCapture {
             }
             camDevice.unlockForConfiguration()
         } catch _ {}
+    }
+
+    func setDeviceOrientation(orientation: CGImagePropertyOrientation) {
+        mDeviceOrientation = orientation
     }
 
     func canChangeFocus(device: AVCaptureDevice) -> Bool {
@@ -245,7 +277,7 @@ extension CameraCapture: AVCapturePhotoCaptureDelegate {
                         if mExposureMode != 0 {
                             fileName = "\(mCapCount)_\(index).jpeg"
                         }
-                        mFileSaveManager.saveImage(image: image, fileName: fileName)
+                        mFileSaveManager.saveImage(image: image.oriented(mDeviceOrientation), fileName: fileName)
                     }
                     mSaveImages.removeAll()
                     mCapCount += 1

@@ -15,10 +15,21 @@ class MotionManager(private val context: Context) : SensorEventListener  {
 
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     private val sensorGyro = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
+    private val sensorGravity = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY)
     private val alpha = 0.4F
     private var isStarted = false
     private var totalGyroAbs = 10.0F
     private var totalGyroAbsHf = 10.0F
+
+    private var grav = FloatArray(3)
+    private var gyro = FloatArray(3)
+
+    var mListener: MotionManagerListener? = null
+
+    interface MotionManagerListener {
+        fun receivedGyro(values: FloatArray)
+        fun receivedGravity(values: FloatArray)
+    }
 
     fun start() {
         if (!isStarted) {
@@ -26,6 +37,7 @@ class MotionManager(private val context: Context) : SensorEventListener  {
             totalGyroAbsHf = 10.0F
             isStarted = true
             sensorManager.registerListener(this, sensorGyro, SensorManager.SENSOR_DELAY_GAME)
+            sensorManager.registerListener(this, sensorGravity, SensorManager.SENSOR_DELAY_NORMAL)
         }
     }
 
@@ -42,6 +54,15 @@ class MotionManager(private val context: Context) : SensorEventListener  {
         return totalGyroAbsHf
     }
 
+    private fun lowpassFilter(currentValues: FloatArray, newValues: FloatArray): FloatArray {
+        val lowpassNewValues = FloatArray(currentValues.size)
+        for (i in currentValues.indices) {
+            lowpassNewValues[i] = alpha * currentValues[i] + (1 - alpha) * newValues[i]
+        }
+
+        return lowpassNewValues
+    }
+
     override fun onSensorChanged(event: SensorEvent?) {
         event?.let {
             val sensorType = it.sensor.type
@@ -50,13 +71,25 @@ class MotionManager(private val context: Context) : SensorEventListener  {
 
             // Log.d(TAG, "onSensorChanged SensorType:${sensorType} Accuracy:${accuracy} Values:${values}")
 
-            if (sensorType == Sensor.TYPE_GYROSCOPE) {
-                val x = abs(values[0])
-                val y = abs(values[1])
-                val z = abs(values[2])
-                totalGyroAbs = x + y + z
-                totalGyroAbsHf = alpha * totalGyroAbs + totalGyroAbsHf * (1 - alpha)
-                // Log.d(TAG, "TYPE_GYROSCOPE totalGyroAbsHf:$totalGyroAbsHf")
+            when (sensorType) {
+                Sensor.TYPE_GYROSCOPE -> {
+                    val x = abs(values[0])
+                    val y = abs(values[1])
+                    val z = abs(values[2])
+                    totalGyroAbs = x + y + z
+                    totalGyroAbsHf = alpha * totalGyroAbs + totalGyroAbsHf * (1 - alpha)
+                    // Log.d(TAG, "TYPE_GYROSCOPE totalGyroAbsHf:$totalGyroAbsHf")
+
+                    gyro = lowpassFilter(gyro, values.clone())
+                    mListener?.receivedGyro(gyro)
+                }
+
+                Sensor.TYPE_GRAVITY -> {
+                    grav = lowpassFilter(grav, values.clone())
+                    mListener?.receivedGravity(grav)
+                }
+
+                else -> {}
             }
         }
     }
