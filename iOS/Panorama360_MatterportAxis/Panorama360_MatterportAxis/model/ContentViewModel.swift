@@ -37,6 +37,7 @@ class ContentViewModel: ObservableObject {
     @Published var mCameraType: CameraType = .normal
     @Published var isCapture = false
     @Published var isUltraWideCamera = false
+    @Published var mFocalLength: Float = 0.0
 
     // Sound
     private var mSoundManager: SoundManager?
@@ -209,6 +210,14 @@ extension ContentViewModel: MatterportAxisManager.Delegate {
 }
 
 extension ContentViewModel: CameraCapture.Delegate {
+    func onCameraChangeComplete() {
+        if let focalLength = mCameraCapture?.getFocalLength() {
+            DispatchQueue.main.async {
+                self.mFocalLength = focalLength
+            }
+        }
+    }
+
     func onSuccessCapturePhoto() {
         if mAutoRotationFlg || (!mAutoRotationFlg || mAngle != 0) {
             mMatterportAxisManager?.sendAngle(angle: UInt8(mAutoRotationAngle))
