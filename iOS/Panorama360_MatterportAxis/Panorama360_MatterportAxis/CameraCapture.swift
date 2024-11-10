@@ -38,6 +38,7 @@ class CameraCapture: NSObject {
     private var mCapCount = 0
     private var mExposureMode = 3
     private var mSaveImages = [CIImage]()
+    private var mDeviceOrientation: CGImagePropertyOrientation = .right
 
     var mCaptureSession = AVCaptureSession()
 
@@ -184,6 +185,10 @@ extension CameraCapture {
         } catch _ {}
     }
 
+    func setDeviceOrientation(orientation: CGImagePropertyOrientation) {
+        mDeviceOrientation = orientation
+    }
+
     func canChangeFocus(device: AVCaptureDevice) -> Bool {
         device.isFocusModeSupported(.autoFocus)
     }
@@ -245,7 +250,7 @@ extension CameraCapture: AVCapturePhotoCaptureDelegate {
                         if mExposureMode != 0 {
                             fileName = "\(mCapCount)_\(index).jpeg"
                         }
-                        mFileSaveManager.saveImage(image: image, fileName: fileName)
+                        mFileSaveManager.saveImage(image: image.oriented(mDeviceOrientation), fileName: fileName)
                     }
                     mSaveImages.removeAll()
                     mCapCount += 1
