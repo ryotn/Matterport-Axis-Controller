@@ -158,7 +158,6 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         }
 
         if (isShooting) return
-        mMotionManager.start()
         mSoundPlayer.playStartSound()
         mShotAngleSum = mRotationAngle
         Handler(Looper.getMainLooper()).postDelayed({
@@ -257,7 +256,6 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
                     if (mShotAngleSum >= 360 && mAngle.value == 0) {
                         isShooting = false
                         mSoundPlayer.playCompSound()
-                        mMotionManager.stop()
                     } else if (mAngle.value == mShotAngleSum && isRotationStop) {
                         mShotAngleSum += mRotationAngle
                         mCamera360Manager?.takePhoto()
