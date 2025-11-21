@@ -57,6 +57,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -314,9 +317,15 @@ fun Footer(model: MainViewModel) {
     val angle: Int by model.mAngle.collectAsState()
     val isUltraWide: Boolean by model.isUltraWide.collectAsState()
     val isConnect: Boolean by model.isConnect.collectAsState()
+    val focalLength: Float by model.mFocalLength.asStateFlow().collectAsState()
     val exposureBracketModeList: List<String> by model.mExposureBracketModeList.collectAsState()
     val exposureBracketModeLabel: String by model.mExposureBracketModeLabel.collectAsState()
     Column {
+        Text(modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+            text = "$focalLength mm",
+            fontWeight = FontWeight.Light
+        )
         Row(modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly) {

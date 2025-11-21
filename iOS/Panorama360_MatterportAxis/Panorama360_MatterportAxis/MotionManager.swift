@@ -11,6 +11,7 @@ import Foundation
 class MotionManager: NSObject {
     protocol Delegate {
         func updateGyroData(gyro: CMGyroData, totalAbs: Double)
+        func updateGravityData(gravity: CMAcceleration)
     }
 
     private let motionManager = CMMotionManager()
@@ -36,7 +37,7 @@ class MotionManager: NSObject {
 
         if motionManager.isGyroAvailable {
             motionManager.gyroUpdateInterval = 0.01
-            motionManager.startGyroUpdates(to: OperationQueue.current!) { [self] (motion: CMGyroData?, error: Error?) in
+            motionManager.startGyroUpdates(to: .current!) { [self] (motion: CMGyroData?, error: Error?) in
                 guard let motion else {
                     print("Gyro data is nil. Error:\(String(describing: error))")
                     return
@@ -52,11 +53,24 @@ class MotionManager: NSObject {
             }
         }
 
+        if motionManager.isDeviceMotionAvailable {
+            motionManager.deviceMotionUpdateInterval = 0.2
+            motionManager.startDeviceMotionUpdates(to: .current!) { (motion: CMDeviceMotion?, error: Error?) in
+                guard let motion else {
+                    print("DeviceMotion data is nil. Error:\(String(describing: error))")
+                    return
+                }
+
+                self.delegate?.updateGravityData(gravity: motion.gravity)
+            }
+        }
+
         isStarted = true
     }
 
     func stop() {
         motionManager.stopGyroUpdates()
+        motionManager.stopAccelerometerUpdates()
         isStarted = false
         totalGyroAbs = 10
     }
