@@ -358,22 +358,25 @@ fun Footer(model: MainViewModel) {
                 }
             )
 
-            IconButton(
-                modifier = Modifier.width(64.dp),
-                onClick = {
-                    model.createDir()
-                }) {
-                Column {
+            Column {
+                IconButton(
+                    modifier = Modifier.width(64.dp),
+                    onClick = {
+                        model.createDir()
+                    }) {
                     Icon(
                         modifier = Modifier.align(Alignment.CenterHorizontally),
                         painter = painterResource(id = R.drawable.create_new_folder),
                         contentDescription = context.getString(R.string.create_dir)
                     )
-                    Text(
-                        fontSize = 12.sp,
-                        text = context.getString(R.string.create_dir)
-                    )
                 }
+
+                Text(
+                    modifier = Modifier.width(64.dp),
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center,
+                    text = context.getString(R.string.create_dir)
+                )
             }
         }
 
@@ -383,25 +386,28 @@ fun Footer(model: MainViewModel) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly) {
 
-            IconButton(
-                modifier = Modifier.size(76.dp),
-                enabled = isConnect,
-                onClick = {
-                    model.resetAngle()
-                }) {
-                Column {
-                    Icon(
-                        modifier = Modifier
-                            .size(60.dp)
-                            .align(Alignment.CenterHorizontally),
-                        painter = painterResource(id = R.drawable.baseline_360_24),
-                        contentDescription = context.getString(R.string.reset_angle)
-                    )
-                    Text(fontSize = 12.sp,
-                        modifier = Modifier.fillMaxWidth(),
-                        text = context.getString(R.string.reset_angle),
-                        textAlign = TextAlign.Center)
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                IconButton(
+                    modifier = Modifier.size(64.dp),
+                    enabled = isConnect,
+                    onClick = {
+                        model.resetAngle()
+                    }) {
+                        Icon(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .align(Alignment.CenterHorizontally),
+                            painter = painterResource(id = R.drawable.baseline_360_24),
+                            contentDescription = context.getString(R.string.reset_angle)
+                        )
                 }
+                Text(
+                    fontSize = 12.sp,
+                    text = context.getString(R.string.reset_angle),
+                    textAlign = TextAlign.Center)
             }
             IconButton(
                 modifier = Modifier.size(126.dp),
@@ -419,13 +425,16 @@ fun Footer(model: MainViewModel) {
                 }
             }
 
-            IconButton(
-                modifier = Modifier.size(76.dp),
-                enabled = isUltraWide,
-                onClick = {
-                    cameraLabel = model.toggleCamera()
-                }) {
-                Column {
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                IconButton(
+                    modifier = Modifier.size(64.dp),
+                    enabled = isUltraWide,
+                    onClick = {
+                        cameraLabel = model.toggleCamera()
+                    }) {
                     Icon(
                         modifier = Modifier
                             .size(64.dp)
@@ -433,13 +442,13 @@ fun Footer(model: MainViewModel) {
                         painter = painterResource(id = R.drawable.baseline_flip_camera_android_24),
                         contentDescription = ""
                     )
-                    Text(
-                        fontSize = 12.sp,
-                        modifier = Modifier.fillMaxWidth(),
-                        text = cameraLabel,
-                        textAlign = TextAlign.Center
-                    )
                 }
+
+                Text(
+                    fontSize = 12.sp,
+                    text = cameraLabel,
+                    textAlign = TextAlign.Center
+                )
             }
 
         }
