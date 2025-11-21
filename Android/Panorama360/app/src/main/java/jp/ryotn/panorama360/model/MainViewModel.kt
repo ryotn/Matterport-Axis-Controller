@@ -291,7 +291,10 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
             mExposureBracketModeList.value = itemArray
 
-            val mode = mPreferencesManager.getExposureBracketMode()
+            var mode = mPreferencesManager.getExposureBracketMode()
+            if (mode > itemArray.size) {
+                mode = itemArray.lastIndex
+            }
             setExposureBracketMode(mode = mode)
         }
 
