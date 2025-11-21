@@ -56,7 +56,7 @@ object PreferencesManager {
 
     fun getExposureBracketMode(isForce: Boolean = false): Int {
         return if (isForce) {
-            mDefaultPreference.getInt(KEY_EXPOSURE_BRACKET_MODE, 0)
+            mDefaultPreference.getInt(KEY_EXPOSURE_BRACKET_MODE, 99)
         } else {
             mExposureBracketMode
         }
