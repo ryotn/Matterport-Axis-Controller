@@ -52,12 +52,14 @@ class MatterportAxisManager: NSObject, CBCentralManagerDelegate, CBPeripheralDel
     }
 
     func resetAngle() {
-        var zeroDegree = 360 - mAngle
+        let zeroDegree = 360 - mAngle
         if zeroDegree > 0xFF {
             sendAngle(angle: 0xFF)
-            zeroDegree -= 0xFF
+            let remainingDegree = zeroDegree - 0xFF
+            sendAngle(angle: UInt8(remainingDegree))
+        } else {
+            sendAngle(angle: UInt8(zeroDegree))
         }
-        sendAngle(angle: UInt8(zeroDegree))
     }
 
     func connect() {

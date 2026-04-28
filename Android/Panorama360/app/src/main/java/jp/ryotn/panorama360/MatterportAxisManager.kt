@@ -61,16 +61,18 @@ class MatterportAxisManager(context: Context) {
     }
 
     fun resetAngle() {
-        var zeroDegree = 360 - mAngle
-        var delay = 0L
-        if (zeroDegree > 0xFF){
+        val zeroDegree = 360 - mAngle
+        if (zeroDegree > 0xFF) {
             sendAngle(angle = 0xFFu)
-            zeroDegree -= 0xFF
-            delay = 500L
+            val remainingDegree = zeroDegree - 0xFF
+            Handler(Looper.getMainLooper()).postDelayed({
+                sendAngle(angle = remainingDegree.toUByte())
+            }, 500L)
+        } else {
+            Handler(Looper.getMainLooper()).postDelayed({
+                sendAngle(angle = zeroDegree.toUByte())
+            }, 0L)
         }
-        Handler(Looper.getMainLooper()).postDelayed( {
-            sendAngle(angle = zeroDegree.toUByte())
-        }, delay)
     }
 
     fun connect() {
