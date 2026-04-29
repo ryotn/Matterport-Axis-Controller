@@ -44,6 +44,8 @@ class MatterportAxisManager(context: Context) {
     private var mWriteCharacteristic: BluetoothGattCharacteristic? = null
     private var mNotifyCharacteristic: BluetoothGattCharacteristic? = null
 
+    private val mainHandler = Handler(Looper.getMainLooper())
+
     var mListener: MatterportAxisManagerListener? = null
 
     interface MatterportAxisManagerListener {
@@ -65,11 +67,11 @@ class MatterportAxisManager(context: Context) {
         if (zeroDegree > 0xFF) {
             sendAngle(angle = 0xFFu)
             val remainingDegree = zeroDegree - 0xFF
-            Handler(Looper.getMainLooper()).postDelayed({
+            mainHandler.postDelayed({
                 sendAngle(angle = remainingDegree.toUByte())
             }, 500L)
         } else {
-            Handler(Looper.getMainLooper()).postDelayed({
+            mainHandler.postDelayed({
                 sendAngle(angle = zeroDegree.toUByte())
             }, 0L)
         }

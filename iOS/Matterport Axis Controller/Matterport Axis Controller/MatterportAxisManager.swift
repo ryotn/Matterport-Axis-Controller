@@ -57,9 +57,9 @@ class MatterportAxisManager: NSObject, CBCentralManagerDelegate, CBPeripheralDel
         if zeroDegree > 0xFF {
             sendAngle(angle: 0xFF)
             let remainingDegree = zeroDegree - 0xFF
-            sendAngle(angle: UInt8(remainingDegree))
+            sendAngle(angle: UInt8(max(0, remainingDegree)))
         } else {
-            sendAngle(angle: UInt8(zeroDegree))
+            sendAngle(angle: UInt8(max(0, zeroDegree)))
         }
     }
     
