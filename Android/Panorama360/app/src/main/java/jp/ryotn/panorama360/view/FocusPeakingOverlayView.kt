@@ -14,12 +14,12 @@ class FocusPeakingOverlayView(context: Context) : View(context) {
 
     fun updateOverlay(bitmap: Bitmap?) {
         mOverlayBitmap = bitmap
-        post { invalidate() }
+        postInvalidate()
     }
 
     fun clearOverlay() {
         mOverlayBitmap = null
-        post { invalidate() }
+        postInvalidate()
     }
 
     override fun onDraw(canvas: Canvas) {

@@ -54,6 +54,7 @@ class Camera360Manager(context: Context) {
     companion object {
         private const val TAG = "Camera360Manager"
         private const val IMAGE_BUFFER_SIZE = 7
+        private const val EDGE_DETECTION_THRESHOLD = 32
         val EXPOSURE_BRACKET_LIST = arrayOf(
             intArrayOf(0),
             intArrayOf(0, -1, 1),
@@ -156,6 +157,9 @@ class Camera360Manager(context: Context) {
         mFocusPeakingThread?.quitSafely()
         mFocusPeakingThread = null
         mFocusPeakingHandler = null
+        // Clear reused processing buffers only after the handler thread is stopped
+        mFocusPeakingBitmap = null
+        mFocusPeakingPixels = null
     }
 
     private fun getExtensionSupportSizes(id: String, extension: Int, imageFormat: Int): List<Size> {
@@ -186,9 +190,7 @@ class Camera360Manager(context: Context) {
                 val fpSizes = sizes.filter { s ->
                     s.width <= 640 && (s.height.toFloat() / s.width.toFloat()) == 0.75F
                 }
-                if (fpSizes.isNotEmpty()) {
-                    focusPeakingSize = fpSizes.maxByOrNull { it.height * it.width }!!
-                }
+                focusPeakingSize = fpSizes.maxByOrNull { it.height * it.width } ?: focusPeakingSize
             }
             getSupportSizes(cameraDevice.id, ImageFormat.JPEG)?.let { sizes ->
                 imageReaderSize = sizes.filter { s ->
@@ -509,11 +511,17 @@ class Camera360Manager(context: Context) {
         }
     }
 
+    // Reused across frames; accessed exclusively from mFocusPeakingHandler (single thread).
+    // Cleared in stopCamera() after the handler thread is stopped to prevent stale references.
+    private var mFocusPeakingBitmap: Bitmap? = null
+    private var mFocusPeakingPixels: IntArray? = null
+
     private val mFocusPeakingImageListener = ImageReader.OnImageAvailableListener { reader ->
+        // Always acquire and close the image to drain the ImageReader buffer and
+        // prevent the camera capture pipeline from stalling.
         val image = reader.acquireLatestImage() ?: return@OnImageAvailableListener
         try {
             if (!mIsFocusPeakingEnabled) {
-                mListener?.onFocusPeakingUpdate(null)
                 return@OnImageAvailableListener
             }
 
@@ -533,8 +541,15 @@ class Camera360Manager(context: Context) {
     }
 
     private fun applySobelEdgeDetection(yPlane: ByteArray, width: Int, height: Int, stride: Int): Bitmap {
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        val pixels = IntArray(width * height)
+        val pixels = mFocusPeakingPixels?.takeIf { it.size == width * height }
+            ?: IntArray(width * height).also { mFocusPeakingPixels = it }
+        val bitmap = mFocusPeakingBitmap?.takeIf { it.width == width && it.height == height }
+            ?: Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).also { mFocusPeakingBitmap = it }
+
+        // Clear pixels from the previous frame. The Sobel loop only writes edge pixels
+        // (magnitude > threshold), so non-edge positions must be explicitly zeroed to
+        // avoid stale colour data from the prior frame persisting in the overlay.
+        pixels.fill(0)
 
         for (y in 1 until height - 1) {
             for (x in 1 until width - 1) {
@@ -550,10 +565,11 @@ class Camera360Manager(context: Context) {
                 val gx = -p00 - 2 * p10 - p20 + p02 + 2 * p12 + p22
                 val gy = -p00 - 2 * p01 - p02 + p20 + 2 * p21 + p22
 
-                val magnitude = min(255, sqrt((gx * gx + gy * gy).toDouble()).toInt())
-
-                if (magnitude > 32) {
-                    pixels[y * width + x] = Color.argb(magnitude, 255, 0, 0)
+                val magnitudeSq = gx * gx + gy * gy
+                if (magnitudeSq > EDGE_DETECTION_THRESHOLD * EDGE_DETECTION_THRESHOLD) {
+                    // sqrt is only called for the minority of pixels that exceed the threshold
+                    val alpha = min(255, sqrt(magnitudeSq.toDouble()).toInt())
+                    pixels[y * width + x] = Color.argb(alpha, 255, 0, 0)
                 }
             }
         }

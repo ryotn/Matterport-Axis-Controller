@@ -386,15 +386,16 @@ extension CameraCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
         }
         mVideoDataOutput = videoDataOutput
 
-        let overlayView = UIImageView()
-        overlayView.contentMode = .scaleAspectFill
-        overlayView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        overlayView.isHidden = true
-        DispatchQueue.main.async {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            let overlayView = UIImageView()
+            overlayView.contentMode = .scaleAspectFill
+            overlayView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            overlayView.isHidden = true
             overlayView.frame = self.mPreviewView.bounds
             self.mPreviewView.addSubview(overlayView)
+            self.mFocusPeakingImageView = overlayView
         }
-        mFocusPeakingImageView = overlayView
     }
 
     func captureOutput(_: AVCaptureOutput,
@@ -402,7 +403,9 @@ extension CameraCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
                        from _: AVCaptureConnection) {
         guard PreferencesManager.shared.getUseFocusPeaking() else {
             DispatchQueue.main.async {
-                self.mFocusPeakingImageView?.isHidden = true
+                if self.mFocusPeakingImageView?.isHidden == false {
+                    self.mFocusPeakingImageView?.isHidden = true
+                }
             }
             return
         }
