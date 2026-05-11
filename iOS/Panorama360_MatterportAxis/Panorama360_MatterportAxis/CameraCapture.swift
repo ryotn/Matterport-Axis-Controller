@@ -371,7 +371,9 @@ extension CameraCapture {
 
 extension CameraCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
     func setupFocusPeaking() {
-        mCIContext = CIContext(options: [.useSoftwareRenderer: false])
+        if mCIContext == nil {
+            mCIContext = CIContext(options: [.useSoftwareRenderer: false])
+        }
 
         let videoDataOutput = AVCaptureVideoDataOutput()
         videoDataOutput.videoSettings = [
