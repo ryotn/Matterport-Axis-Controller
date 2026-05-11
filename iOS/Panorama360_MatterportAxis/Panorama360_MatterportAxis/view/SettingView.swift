@@ -23,6 +23,15 @@ struct SettingView: View {
                 }).onChange(of: model.isFocusPeaking) { _, _ in
                     model.changeFocusPeaking()
                 }
+                VStack(alignment: .leading) {
+                    Text("フォーカスピーキング しきい値: \(String(format: "%.1f", model.focusPeakingThreshold))")
+                    Slider(value: $model.focusPeakingThreshold,
+                           in: 1.0 ... 10.0,
+                           step: 0.5,
+                           onEditingChanged: { _ in
+                               model.changeFocusPeakingThreshold()
+                           })
+                }
             }
         }
         .navigationBarTitle("Setting", displayMode: .large)

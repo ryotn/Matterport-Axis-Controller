@@ -384,6 +384,10 @@ extension CameraCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
         if mCaptureSession.canAddOutput(videoDataOutput) {
             mCaptureSession.addOutput(videoDataOutput)
         }
+        if let connection = videoDataOutput.connection(with: .video),
+           connection.isVideoOrientationSupported {
+            connection.videoOrientation = .portrait
+        }
         mVideoDataOutput = videoDataOutput
 
         DispatchQueue.main.async { [weak self] in
@@ -411,16 +415,13 @@ extension CameraCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
         }
 
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
-
-        var ciImage = CIImage(cvPixelBuffer: pixelBuffer)
-
-        // Orient the image to match the device capture orientation
-        ciImage = ciImage.oriented(mDeviceOrientation)
+        let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
 
         // Edge detection
         guard let edgeFilter = CIFilter(name: "CIEdges") else { return }
         edgeFilter.setValue(ciImage, forKey: kCIInputImageKey)
-        edgeFilter.setValue(5.0, forKey: kCIInputIntensityKey)
+        edgeFilter.setValue(PreferencesManager.shared.getFocusPeakingThreshold(),
+                            forKey: kCIInputIntensityKey)
         guard let edgeOutput = edgeFilter.outputImage else { return }
 
         // Colorize edges: make them red with alpha proportional to edge strength
