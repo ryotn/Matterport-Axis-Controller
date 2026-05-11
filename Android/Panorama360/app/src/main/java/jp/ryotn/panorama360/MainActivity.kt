@@ -47,6 +47,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -195,8 +196,18 @@ fun GetPermission(model: MainViewModel) {
 @Composable
 fun Contents(model: MainViewModel, settingModel: SettingViewModel) {
     val isPermission: Boolean by model.isPermission.collectAsState()
+    val isFocusPeaking: Boolean by settingModel.isFocusPeaking.collectAsState()
+    val focusPeakingThreshold: Float by settingModel.focusPeakingThreshold.collectAsState()
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
+
+    LaunchedEffect(isFocusPeaking) {
+        model.setFocusPeaking(isFocusPeaking)
+    }
+
+    LaunchedEffect(focusPeakingThreshold) {
+        model.setFocusPeakingThreshold(focusPeakingThreshold)
+    }
 
     Scaffold(
         topBar = {

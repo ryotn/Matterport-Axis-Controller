@@ -2,6 +2,8 @@ package jp.ryotn.panorama360.camera
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.ImageFormat
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCaptureSession
@@ -37,6 +39,8 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.math.min
+import kotlin.math.sqrt
 
 
 data class Exif(val tag: String, val value: String) {
@@ -50,6 +54,12 @@ class Camera360Manager(context: Context) {
     companion object {
         private const val TAG = "Camera360Manager"
         private const val IMAGE_BUFFER_SIZE = 7
+        const val DEFAULT_EDGE_DETECTION_THRESHOLD = 32
+        private const val FOCUS_PEAKING_RED = 255
+        private const val FOCUS_PEAKING_GREEN = 0
+        private const val FOCUS_PEAKING_BLUE = 0
+        const val FOCUS_PEAKING_THRESHOLD_MIN = 8f
+        const val FOCUS_PEAKING_THRESHOLD_MAX = 1024f
         val EXPOSURE_BRACKET_LIST = arrayOf(
             intArrayOf(0),
             intArrayOf(0, -1, 1),
@@ -69,6 +79,12 @@ class Camera360Manager(context: Context) {
     private var mPhysicalCameraId: String? = null
     private var mSurface: Surface? = null
     private var mImageReader: ImageReader? = null
+    private var mFocusPeakingReader: ImageReader? = null
+    private var mFocusPeakingThread: HandlerThread? = null
+    private var mFocusPeakingHandler: Handler? = null
+    private var mIsFocusPeakingEnabled = false
+    private var mEdgeDetectionThreshold = DEFAULT_EDGE_DETECTION_THRESHOLD
+    private var mEdgeDetectionThresholdSq = DEFAULT_EDGE_DETECTION_THRESHOLD * DEFAULT_EDGE_DETECTION_THRESHOLD
     private var mExposureBracketMode = 0
     private var mExposureBracketCount = 0
 
@@ -90,6 +106,7 @@ class Camera360Manager(context: Context) {
         fun startCameraConfigured(context: Context)
         fun takePhotoSuccess()
         fun takePhotoError()
+        fun onFocusPeakingUpdate(bitmap: Bitmap?)
     }
 
     init {
@@ -141,6 +158,15 @@ class Camera360Manager(context: Context) {
         mCameraDevice?.close()
         mCameraDevice = null
         mPreviewRequestBuilder = null
+        mFocusPeakingReader?.close()
+        mFocusPeakingReader = null
+        mFocusPeakingHandler?.removeCallbacksAndMessages(null)
+        mFocusPeakingThread?.quitSafely()
+        mFocusPeakingThread = null
+        mFocusPeakingHandler = null
+        // Clear reused processing buffers only after the handler thread is stopped
+        mFocusPeakingBitmap = null
+        mFocusPeakingPixels = null
     }
 
     private fun getExtensionSupportSizes(id: String, extension: Int, imageFormat: Int): List<Size> {
@@ -163,10 +189,15 @@ class Camera360Manager(context: Context) {
         mCameraDevice?.let { cameraDevice ->
             var size = Size(1024, 1024)
             var imageReaderSize = Size(1024, 1024)
+            var focusPeakingSize = Size(320, 240)
             getSupportSizes(cameraDevice.id, ImageFormat.YUV_420_888)?.let { sizes ->
                 size = sizes.filter { s ->
                     s.width in 1025..2023 && (s.height.toFloat() / s.width.toFloat()) == 0.75F
                 }[0]
+                val fpSizes = sizes.filter { s ->
+                    s.width <= 640 && (s.height.toFloat() / s.width.toFloat()) == 0.75F
+                }
+                focusPeakingSize = fpSizes.maxByOrNull { it.height * it.width } ?: focusPeakingSize
             }
             getSupportSizes(cameraDevice.id, ImageFormat.JPEG)?.let { sizes ->
                 imageReaderSize = sizes.filter { s ->
@@ -188,6 +219,14 @@ class Camera360Manager(context: Context) {
                 imageReaderSize.width, imageReaderSize.height, ImageFormat.JPEG, IMAGE_BUFFER_SIZE
             )
 
+            // Set up focus peaking ImageReader (YUV_420_888 at lower resolution)
+            mFocusPeakingThread = HandlerThread("FocusPeakingThread").also { it.start() }
+            mFocusPeakingHandler = Handler(mFocusPeakingThread!!.looper)
+            mFocusPeakingReader = ImageReader.newInstance(
+                focusPeakingSize.width, focusPeakingSize.height, ImageFormat.YUV_420_888, 2
+            )
+            mFocusPeakingReader?.setOnImageAvailableListener(mFocusPeakingImageListener, mFocusPeakingHandler)
+
             mPhysicalCameraId = physicalCameraId
 
             val configurations: MutableList<OutputConfiguration> = ArrayList()
@@ -207,10 +246,14 @@ class Camera360Manager(context: Context) {
                 )
                 cameraDevice.createExtensionSession(extensionConfiguration)
             } else {
+                val focusPeakingConfig = OutputConfiguration(mFocusPeakingReader!!.surface)
+                if (mPhysicalCameraId != null) focusPeakingConfig.setPhysicalCameraId(mPhysicalCameraId)
+                configurations.add(focusPeakingConfig)
 
                 mPreviewRequestBuilder =
                     cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
                 mPreviewRequestBuilder?.addTarget(mSurface!!)
+                mPreviewRequestBuilder?.addTarget(mFocusPeakingReader!!.surface)
 
                 cameraDevice.createCaptureSessionByOutputConfigurations(
                     configurations,
@@ -466,5 +509,87 @@ class Camera360Manager(context: Context) {
                 }
             }
         }
+    }
+
+    fun setFocusPeaking(enable: Boolean) {
+        mIsFocusPeakingEnabled = enable
+        if (!enable) {
+            mListener?.onFocusPeakingUpdate(null)
+        }
+    }
+
+    fun setFocusPeakingThreshold(value: Int) {
+        mEdgeDetectionThreshold = value.coerceIn(
+            FOCUS_PEAKING_THRESHOLD_MIN.toInt(),
+            FOCUS_PEAKING_THRESHOLD_MAX.toInt()
+        )
+        mEdgeDetectionThresholdSq = mEdgeDetectionThreshold * mEdgeDetectionThreshold
+    }
+
+    // Reused across frames; accessed exclusively from mFocusPeakingHandler (single thread).
+    // Cleared in stopCamera() after the handler thread is stopped to prevent stale references.
+    private var mFocusPeakingBitmap: Bitmap? = null
+    private var mFocusPeakingPixels: IntArray? = null
+
+    private val mFocusPeakingImageListener = ImageReader.OnImageAvailableListener { reader ->
+        // Always acquire and close the image to drain the ImageReader buffer and
+        // prevent the camera capture pipeline from stalling.
+        val image = reader.acquireLatestImage() ?: return@OnImageAvailableListener
+        try {
+            if (!mIsFocusPeakingEnabled) {
+                return@OnImageAvailableListener
+            }
+
+            val yPlane = image.planes[0]
+            val width = image.width
+            val height = image.height
+            val stride = yPlane.rowStride
+            val buffer = yPlane.buffer
+            val yData = ByteArray(buffer.remaining())
+            buffer.get(yData)
+
+            val bitmap = applySobelEdgeDetection(yData, width, height, stride)
+            mListener?.onFocusPeakingUpdate(bitmap)
+        } finally {
+            image.close()
+        }
+    }
+
+    private fun applySobelEdgeDetection(yPlane: ByteArray, width: Int, height: Int, stride: Int): Bitmap {
+        val pixels = mFocusPeakingPixels?.takeIf { it.size == width * height }
+            ?: IntArray(width * height).also { mFocusPeakingPixels = it }
+        val bitmap = mFocusPeakingBitmap?.takeIf { it.width == width && it.height == height }
+            ?: Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).also { mFocusPeakingBitmap = it }
+
+        // Clear pixels from the previous frame. The Sobel loop only writes edge pixels
+        // (magnitude > threshold), so non-edge positions must be explicitly zeroed to
+        // avoid stale colour data from the prior frame persisting in the overlay.
+        pixels.fill(0)
+
+        for (y in 1 until height - 1) {
+            for (x in 1 until width - 1) {
+                val p00 = yPlane[(y - 1) * stride + (x - 1)].toInt() and 0xFF
+                val p01 = yPlane[(y - 1) * stride + x].toInt() and 0xFF
+                val p02 = yPlane[(y - 1) * stride + (x + 1)].toInt() and 0xFF
+                val p10 = yPlane[y * stride + (x - 1)].toInt() and 0xFF
+                val p12 = yPlane[y * stride + (x + 1)].toInt() and 0xFF
+                val p20 = yPlane[(y + 1) * stride + (x - 1)].toInt() and 0xFF
+                val p21 = yPlane[(y + 1) * stride + x].toInt() and 0xFF
+                val p22 = yPlane[(y + 1) * stride + (x + 1)].toInt() and 0xFF
+
+                val gx = -p00 - 2 * p10 - p20 + p02 + 2 * p12 + p22
+                val gy = -p00 - 2 * p01 - p02 + p20 + 2 * p21 + p22
+
+                val magnitudeSq = gx * gx + gy * gy
+                if (magnitudeSq > mEdgeDetectionThresholdSq) {
+                    // sqrt is only called for the minority of pixels that exceed the threshold
+                    val alpha = min(255, sqrt(magnitudeSq.toDouble()).toInt())
+                    pixels[y * width + x] = Color.argb(alpha, FOCUS_PEAKING_RED, FOCUS_PEAKING_GREEN, FOCUS_PEAKING_BLUE)
+                }
+            }
+        }
+
+        bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
+        return bitmap
     }
 }

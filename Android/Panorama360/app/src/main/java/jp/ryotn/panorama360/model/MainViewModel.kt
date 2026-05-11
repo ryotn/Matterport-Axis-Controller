@@ -3,6 +3,7 @@ package jp.ryotn.panorama360.model
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
+import android.graphics.Bitmap
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -127,6 +128,17 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     fun setFocus(f: Float) {
         mFocus.value = round(f * 10.0f) / 10.0f
         mCamera360Manager?.setFocusDistance(mFocus.value)
+    }
+
+    fun setFocusPeaking(enable: Boolean) {
+        mCamera360Manager?.setFocusPeaking(enable)
+        if (!enable) {
+            mCameraView.clearFocusPeaking()
+        }
+    }
+
+    fun setFocusPeakingThreshold(value: Float) {
+        mCamera360Manager?.setFocusPeakingThreshold(value.toInt())
     }
 
     fun toggleCamera(): String {
@@ -300,6 +312,10 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             mCamera360Manager?.getFocalLengthIn35mm()?.let {
                 mFocalLength.value = Math.round(it * 10.0f) / 10.0f
             }
+
+            // Apply saved focus peaking preference
+            mCamera360Manager?.setFocusPeaking(mPreferencesManager.getUseFocusPeaking())
+            mCamera360Manager?.setFocusPeakingThreshold(mPreferencesManager.getFocusPeakingThreshold().toInt())
         }
 
         override fun takePhotoSuccess() {
@@ -310,6 +326,10 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         override fun takePhotoError() {
             Log.d(TAG, "takePhotoError")
             isShooting = false
+        }
+
+        override fun onFocusPeakingUpdate(bitmap: Bitmap?) {
+            mCameraView.updateFocusPeaking(bitmap)
         }
 
     }

@@ -8,6 +8,7 @@
 //
 
 import AVFoundation
+import CoreImage
 import Foundation
 import MediaPlayer
 import UIKit
@@ -41,6 +42,11 @@ class CameraCapture: NSObject {
     private var mSaveImages = [CIImage]()
     private var mDeviceOrientation: CGImagePropertyOrientation = .right
 
+    // Focus peaking
+    private var mVideoDataOutput: AVCaptureVideoDataOutput?
+    private var mFocusPeakingImageView: UIImageView?
+    private let ciContext = CIContext(options: [.useSoftwareRenderer: false])
+
     var mCaptureSession = AVCaptureSession()
 
     var mWideCamera: AVCaptureDevice?
@@ -65,6 +71,7 @@ class CameraCapture: NSObject {
         setupDevice()
         setupInputOutput()
         setupPreviewLayer()
+        setupFocusPeaking()
 
         DispatchQueue.global(qos: .default).async {
             self.mCaptureSession.startRunning()
@@ -122,6 +129,11 @@ extension CameraCapture {
             mCaptureSession.removeInput(oldDeviceInput)
             mCaptureSession.addInput(newDeviceInput)
             mCaptureSession.commitConfiguration()
+
+            if let connection = mVideoDataOutput?.connection(with: .video),
+               connection.isVideoOrientationSupported {
+                connection.videoOrientation = .portrait
+            }
 
             setFocus(position: focus)
             mDelegate?.onCameraChangeComplete()
@@ -356,6 +368,79 @@ extension CameraCapture {
             try AVAudioSession.sharedInstance().setActive(active)
         } catch {
             print("setActive failed ", error)
+        }
+    }
+}
+
+// MARK: FocusPeaking
+
+extension CameraCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
+    func setupFocusPeaking() {
+        let videoDataOutput = AVCaptureVideoDataOutput()
+        videoDataOutput.videoSettings = [
+            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
+        ]
+        videoDataOutput.alwaysDiscardsLateVideoFrames = true
+        videoDataOutput.setSampleBufferDelegate(self,
+                                                queue: DispatchQueue(label: "focusPeakingQueue",
+                                                                     qos: .userInitiated))
+        if mCaptureSession.canAddOutput(videoDataOutput) {
+            mCaptureSession.addOutput(videoDataOutput)
+        }
+        if let connection = videoDataOutput.connection(with: .video),
+           connection.isVideoOrientationSupported {
+            connection.videoOrientation = .portrait
+        }
+        mVideoDataOutput = videoDataOutput
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            let overlayView = UIImageView()
+            overlayView.contentMode = .scaleAspectFill
+            overlayView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            overlayView.isHidden = true
+            overlayView.frame = self.mPreviewView.bounds
+            self.mPreviewView.addSubview(overlayView)
+            self.mFocusPeakingImageView = overlayView
+        }
+    }
+
+    func captureOutput(_: AVCaptureOutput,
+                       didOutput sampleBuffer: CMSampleBuffer,
+                       from _: AVCaptureConnection) {
+        guard PreferencesManager.shared.getUseFocusPeaking() else {
+            DispatchQueue.main.async {
+                if self.mFocusPeakingImageView?.isHidden == false {
+                    self.mFocusPeakingImageView?.isHidden = true
+                }
+            }
+            return
+        }
+
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
+
+        // Edge detection
+        guard let edgeFilter = CIFilter(name: "CIEdges") else { return }
+        edgeFilter.setValue(ciImage, forKey: kCIInputImageKey)
+        edgeFilter.setValue(PreferencesManager.shared.getFocusPeakingThreshold(),
+                            forKey: kCIInputIntensityKey)
+        guard let edgeOutput = edgeFilter.outputImage else { return }
+
+        // Colorize edges: make them red with alpha proportional to edge strength
+        let colorized = edgeOutput.applyingFilter("CIColorMatrix", parameters: [
+            "inputRVector": CIVector(x: 1, y: 0, z: 0, w: 0),
+            "inputGVector": CIVector(x: 0, y: 0, z: 0, w: 0),
+            "inputBVector": CIVector(x: 0, y: 0, z: 0, w: 0),
+            "inputAVector": CIVector(x: 1, y: 0, z: 0, w: 0)
+        ])
+
+        guard let cgImage = ciContext.createCGImage(colorized, from: colorized.extent) else { return }
+
+        let overlayImage = UIImage(cgImage: cgImage)
+        DispatchQueue.main.async {
+            self.mFocusPeakingImageView?.image = overlayImage
+            self.mFocusPeakingImageView?.isHidden = false
         }
     }
 }

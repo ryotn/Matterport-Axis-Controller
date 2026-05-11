@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,16 +20,34 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import jp.ryotn.panorama360.camera.Camera360Manager
 import jp.ryotn.panorama360.model.SettingViewModel
 import jp.ryotn.panorama360.view.ui.theme.Panorama360Theme
 
 @Composable
 fun Setting(model: SettingViewModel) {
     val isGyro: Boolean by model.isGyro.collectAsState()
+    val isFocusPeaking: Boolean by model.isFocusPeaking.collectAsState()
+    val focusPeakingThreshold: Float by model.focusPeakingThreshold.collectAsState()
 
     Column {
         SwitchWithLabel(label = "雲台の回転停止検知に\nジャイロセンサーを利用する", state = isGyro) {
             model.putUseGyro(it)
+        }
+        SwitchWithLabel(label = "フォーカスピーキング", state = isFocusPeaking) {
+            model.putUseFocusPeaking(it)
+        }
+        Column(modifier = Modifier
+            .padding(horizontal = 24.dp)
+            .fillMaxWidth()) {
+            Text(text = "フォーカスピーキング しきい値: ${focusPeakingThreshold.toInt()}")
+            Slider(
+                value = focusPeakingThreshold,
+                valueRange = Camera360Manager.FOCUS_PEAKING_THRESHOLD_MIN..Camera360Manager.FOCUS_PEAKING_THRESHOLD_MAX,
+                onValueChange = {
+                    model.putFocusPeakingThreshold(it)
+                }
+            )
         }
     }
 }
