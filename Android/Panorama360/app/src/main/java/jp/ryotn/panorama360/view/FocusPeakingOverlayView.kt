@@ -27,6 +27,7 @@ class FocusPeakingOverlayView(context: Context) : View(context) {
         mOverlayBitmap?.let { bitmap ->
             val srcRect = Rect(0, 0, bitmap.width, bitmap.height)
             val dstRect = RectF(0f, 0f, width.toFloat(), height.toFloat())
+            // Landscape processing bitmap drawn over portrait UI needs a 90-degree rotation.
             if (bitmap.width > bitmap.height && height > width) {
                 canvas.save()
                 canvas.rotate(90f, width / 2f, height / 2f)

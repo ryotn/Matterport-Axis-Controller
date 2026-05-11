@@ -55,6 +55,11 @@ class Camera360Manager(context: Context) {
         private const val TAG = "Camera360Manager"
         private const val IMAGE_BUFFER_SIZE = 7
         private const val DEFAULT_EDGE_DETECTION_THRESHOLD = 32
+        private const val FOCUS_PEAKING_RED = 255
+        private const val FOCUS_PEAKING_GREEN = 0
+        private const val FOCUS_PEAKING_BLUE = 0
+        const val FOCUS_PEAKING_THRESHOLD_MIN = 8f
+        const val FOCUS_PEAKING_THRESHOLD_MAX = 96f
         val EXPOSURE_BRACKET_LIST = arrayOf(
             intArrayOf(0),
             intArrayOf(0, -1, 1),
@@ -79,6 +84,7 @@ class Camera360Manager(context: Context) {
     private var mFocusPeakingHandler: Handler? = null
     private var mIsFocusPeakingEnabled = false
     private var mEdgeDetectionThreshold = DEFAULT_EDGE_DETECTION_THRESHOLD
+    private var mEdgeDetectionThresholdSq = DEFAULT_EDGE_DETECTION_THRESHOLD * DEFAULT_EDGE_DETECTION_THRESHOLD
     private var mExposureBracketMode = 0
     private var mExposureBracketCount = 0
 
@@ -513,7 +519,11 @@ class Camera360Manager(context: Context) {
     }
 
     fun setFocusPeakingThreshold(value: Int) {
-        mEdgeDetectionThreshold = value.coerceIn(8, 96)
+        mEdgeDetectionThreshold = value.coerceIn(
+            FOCUS_PEAKING_THRESHOLD_MIN.toInt(),
+            FOCUS_PEAKING_THRESHOLD_MAX.toInt()
+        )
+        mEdgeDetectionThresholdSq = mEdgeDetectionThreshold * mEdgeDetectionThreshold
     }
 
     // Reused across frames; accessed exclusively from mFocusPeakingHandler (single thread).
@@ -555,7 +565,6 @@ class Camera360Manager(context: Context) {
         // (magnitude > threshold), so non-edge positions must be explicitly zeroed to
         // avoid stale colour data from the prior frame persisting in the overlay.
         pixels.fill(0)
-        val thresholdSq = mEdgeDetectionThreshold * mEdgeDetectionThreshold
 
         for (y in 1 until height - 1) {
             for (x in 1 until width - 1) {
@@ -572,10 +581,10 @@ class Camera360Manager(context: Context) {
                 val gy = -p00 - 2 * p01 - p02 + p20 + 2 * p21 + p22
 
                 val magnitudeSq = gx * gx + gy * gy
-                if (magnitudeSq > thresholdSq) {
+                if (magnitudeSq > mEdgeDetectionThresholdSq) {
                     // sqrt is only called for the minority of pixels that exceed the threshold
                     val alpha = min(255, sqrt(magnitudeSq.toDouble()).toInt())
-                    pixels[y * width + x] = Color.argb(alpha, 255, 0, 0)
+                    pixels[y * width + x] = Color.argb(alpha, FOCUS_PEAKING_RED, FOCUS_PEAKING_GREEN, FOCUS_PEAKING_BLUE)
                 }
             }
         }

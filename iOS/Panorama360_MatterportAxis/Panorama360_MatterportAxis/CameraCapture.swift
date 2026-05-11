@@ -45,7 +45,7 @@ class CameraCapture: NSObject {
     // Focus peaking
     private var mVideoDataOutput: AVCaptureVideoDataOutput?
     private var mFocusPeakingImageView: UIImageView?
-    private var mCIContext: CIContext?
+    private let ciContext = CIContext(options: [.useSoftwareRenderer: false])
 
     var mCaptureSession = AVCaptureSession()
 
@@ -371,10 +371,6 @@ extension CameraCapture {
 
 extension CameraCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
     func setupFocusPeaking() {
-        if mCIContext == nil {
-            mCIContext = CIContext(options: [.useSoftwareRenderer: false])
-        }
-
         let videoDataOutput = AVCaptureVideoDataOutput()
         videoDataOutput.videoSettings = [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
@@ -434,8 +430,7 @@ extension CameraCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
             "inputAVector": CIVector(x: 1, y: 0, z: 0, w: 0)
         ])
 
-        guard let context = mCIContext,
-              let cgImage = context.createCGImage(colorized, from: colorized.extent) else { return }
+        guard let cgImage = ciContext.createCGImage(colorized, from: colorized.extent) else { return }
 
         let overlayImage = UIImage(cgImage: cgImage)
         DispatchQueue.main.async {

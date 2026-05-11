@@ -37,8 +37,9 @@ class SettingViewModel(private val application: Application) : AndroidViewModel(
     }
 
     fun putFocusPeakingThreshold(value: Float) {
-        focusPeakingThreshold.value = value
-        mPreferencesManager.putFocusPeakingThreshold(value)
+        val roundedValue = value.toInt().toFloat()
+        focusPeakingThreshold.value = roundedValue
+        mPreferencesManager.putFocusPeakingThreshold(roundedValue)
     }
 
 }

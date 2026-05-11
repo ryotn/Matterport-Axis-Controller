@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import jp.ryotn.panorama360.camera.Camera360Manager
 import jp.ryotn.panorama360.model.SettingViewModel
 import jp.ryotn.panorama360.view.ui.theme.Panorama360Theme
 
@@ -42,8 +43,7 @@ fun Setting(model: SettingViewModel) {
             Text(text = "フォーカスピーキング しきい値: ${focusPeakingThreshold.toInt()}")
             Slider(
                 value = focusPeakingThreshold,
-                valueRange = 8f..96f,
-                steps = 87,
+                valueRange = Camera360Manager.FOCUS_PEAKING_THRESHOLD_MIN..Camera360Manager.FOCUS_PEAKING_THRESHOLD_MAX,
                 onValueChange = {
                     model.putFocusPeakingThreshold(it)
                 }
