@@ -54,7 +54,7 @@ class Camera360Manager(context: Context) {
     companion object {
         private const val TAG = "Camera360Manager"
         private const val IMAGE_BUFFER_SIZE = 7
-        private const val EDGE_DETECTION_THRESHOLD = 32
+        private const val DEFAULT_EDGE_DETECTION_THRESHOLD = 32
         val EXPOSURE_BRACKET_LIST = arrayOf(
             intArrayOf(0),
             intArrayOf(0, -1, 1),
@@ -78,6 +78,7 @@ class Camera360Manager(context: Context) {
     private var mFocusPeakingThread: HandlerThread? = null
     private var mFocusPeakingHandler: Handler? = null
     private var mIsFocusPeakingEnabled = false
+    private var mEdgeDetectionThreshold = DEFAULT_EDGE_DETECTION_THRESHOLD
     private var mExposureBracketMode = 0
     private var mExposureBracketCount = 0
 
@@ -511,6 +512,10 @@ class Camera360Manager(context: Context) {
         }
     }
 
+    fun setFocusPeakingThreshold(value: Int) {
+        mEdgeDetectionThreshold = value.coerceIn(1, 255)
+    }
+
     // Reused across frames; accessed exclusively from mFocusPeakingHandler (single thread).
     // Cleared in stopCamera() after the handler thread is stopped to prevent stale references.
     private var mFocusPeakingBitmap: Bitmap? = null
@@ -566,7 +571,7 @@ class Camera360Manager(context: Context) {
                 val gy = -p00 - 2 * p01 - p02 + p20 + 2 * p21 + p22
 
                 val magnitudeSq = gx * gx + gy * gy
-                if (magnitudeSq > EDGE_DETECTION_THRESHOLD * EDGE_DETECTION_THRESHOLD) {
+                if (magnitudeSq > mEdgeDetectionThreshold * mEdgeDetectionThreshold) {
                     // sqrt is only called for the minority of pixels that exceed the threshold
                     val alpha = min(255, sqrt(magnitudeSq.toDouble()).toInt())
                     pixels[y * width + x] = Color.argb(alpha, 255, 0, 0)

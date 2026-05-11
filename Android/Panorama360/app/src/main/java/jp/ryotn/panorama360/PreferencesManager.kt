@@ -11,6 +11,7 @@ object PreferencesManager {
     private const val KEY_SAVE_DIR_PATH = "SAVE_DIR_PATH"
     private const val KEY_EXPOSURE_BRACKET_MODE = "EXPOSURE_BRACKET_MODE"
     private const val KEY_USE_FOCUS_PEAKING = "USE_FOCUS_PEAKING"
+    private const val KEY_FOCUS_PEAKING_THRESHOLD = "FOCUS_PEAKING_THRESHOLD"
 
     private lateinit var mDefaultPreference: SharedPreferences
 
@@ -18,6 +19,7 @@ object PreferencesManager {
     private var mSaveDirPath: String? = null
     private var mExposureBracketMode = 0
     private var isFocusPeaking = false
+    private var focusPeakingThreshold = 32f
 
     fun setUp(context: Context){
         mDefaultPreference = PreferenceManager.getDefaultSharedPreferences(context)
@@ -25,6 +27,7 @@ object PreferencesManager {
         mSaveDirPath = getSaveDirPth(isForce = true)
         mExposureBracketMode = getExposureBracketMode(isForce = true)
         isFocusPeaking = getUseFocusPeaking(isForce = true)
+        focusPeakingThreshold = getFocusPeakingThreshold(isForce = true)
     }
 
     fun getUseGyro(isForce: Boolean = false): Boolean {
@@ -84,6 +87,21 @@ object PreferencesManager {
         isFocusPeaking = value
         mDefaultPreference.edit {
             putBoolean(KEY_USE_FOCUS_PEAKING, value)
+        }
+    }
+
+    fun getFocusPeakingThreshold(isForce: Boolean = false): Float {
+        return if (isForce) {
+            mDefaultPreference.getFloat(KEY_FOCUS_PEAKING_THRESHOLD, 32f)
+        } else {
+            focusPeakingThreshold
+        }
+    }
+
+    fun putFocusPeakingThreshold(value: Float) {
+        focusPeakingThreshold = value
+        mDefaultPreference.edit {
+            putFloat(KEY_FOCUS_PEAKING_THRESHOLD, value)
         }
     }
 }

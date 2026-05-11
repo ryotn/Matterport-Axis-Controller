@@ -27,7 +27,20 @@ class FocusPeakingOverlayView(context: Context) : View(context) {
         mOverlayBitmap?.let { bitmap ->
             val srcRect = Rect(0, 0, bitmap.width, bitmap.height)
             val dstRect = RectF(0f, 0f, width.toFloat(), height.toFloat())
-            canvas.drawBitmap(bitmap, srcRect, dstRect, mPaint)
+            if (bitmap.width > bitmap.height && height > width) {
+                canvas.save()
+                canvas.rotate(90f, width / 2f, height / 2f)
+                val rotatedDstRect = RectF(
+                    (width - height) / 2f,
+                    (height - width) / 2f,
+                    (width + height) / 2f,
+                    (height + width) / 2f
+                )
+                canvas.drawBitmap(bitmap, srcRect, rotatedDstRect, mPaint)
+                canvas.restore()
+            } else {
+                canvas.drawBitmap(bitmap, srcRect, dstRect, mPaint)
+            }
         }
     }
 }

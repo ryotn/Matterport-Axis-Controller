@@ -137,6 +137,10 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         }
     }
 
+    fun setFocusPeakingThreshold(value: Float) {
+        mCamera360Manager?.setFocusPeakingThreshold(value.toInt())
+    }
+
     fun toggleCamera(): String {
         var nextCameraLabel = ""
         var nextCameraInfo: CameraInfoService.ExtendedCameraInfo? = null
@@ -311,6 +315,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
             // Apply saved focus peaking preference
             mCamera360Manager?.setFocusPeaking(mPreferencesManager.getUseFocusPeaking())
+            mCamera360Manager?.setFocusPeakingThreshold(mPreferencesManager.getFocusPeakingThreshold().toInt())
         }
 
         override fun takePhotoSuccess() {

@@ -14,6 +14,7 @@ class SettingViewModel(private val application: Application) : AndroidViewModel(
 
     val isGyro : MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isFocusPeaking : MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val focusPeakingThreshold : MutableStateFlow<Float> = MutableStateFlow(32f)
 
     fun init(isPreview: Boolean = false) {
         if (!isPreview) {
@@ -21,6 +22,7 @@ class SettingViewModel(private val application: Application) : AndroidViewModel(
             mPreferencesManager.setUp(application.applicationContext)
             isGyro.value = mPreferencesManager.getUseGyro()
             isFocusPeaking.value = mPreferencesManager.getUseFocusPeaking()
+            focusPeakingThreshold.value = mPreferencesManager.getFocusPeakingThreshold()
         }
     }
 
@@ -32,6 +34,11 @@ class SettingViewModel(private val application: Application) : AndroidViewModel(
     fun putUseFocusPeaking(value: Boolean) {
         isFocusPeaking.value = value
         mPreferencesManager.putUseFocusPeaking(value)
+    }
+
+    fun putFocusPeakingThreshold(value: Float) {
+        focusPeakingThreshold.value = value
+        mPreferencesManager.putFocusPeakingThreshold(value)
     }
 
 }

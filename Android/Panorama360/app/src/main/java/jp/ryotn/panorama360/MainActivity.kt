@@ -197,11 +197,16 @@ fun GetPermission(model: MainViewModel) {
 fun Contents(model: MainViewModel, settingModel: SettingViewModel) {
     val isPermission: Boolean by model.isPermission.collectAsState()
     val isFocusPeaking: Boolean by settingModel.isFocusPeaking.collectAsState()
+    val focusPeakingThreshold: Float by settingModel.focusPeakingThreshold.collectAsState()
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
 
     LaunchedEffect(isFocusPeaking) {
         model.setFocusPeaking(isFocusPeaking)
+    }
+
+    LaunchedEffect(focusPeakingThreshold) {
+        model.setFocusPeakingThreshold(focusPeakingThreshold)
     }
 
     Scaffold(
