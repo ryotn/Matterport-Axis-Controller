@@ -10,18 +10,21 @@ object PreferencesManager {
     private const val KEY_USE_GYRO = "USE_GYRO"
     private const val KEY_SAVE_DIR_PATH = "SAVE_DIR_PATH"
     private const val KEY_EXPOSURE_BRACKET_MODE = "EXPOSURE_BRACKET_MODE"
+    private const val KEY_USE_FOCUS_PEAKING = "USE_FOCUS_PEAKING"
 
     private lateinit var mDefaultPreference: SharedPreferences
 
     private var isGyro = false
     private var mSaveDirPath: String? = null
     private var mExposureBracketMode = 0
+    private var isFocusPeaking = false
 
     fun setUp(context: Context){
         mDefaultPreference = PreferenceManager.getDefaultSharedPreferences(context)
         isGyro = getUseGyro(isForce = true)
         mSaveDirPath = getSaveDirPth(isForce = true)
         mExposureBracketMode = getExposureBracketMode(isForce = true)
+        isFocusPeaking = getUseFocusPeaking(isForce = true)
     }
 
     fun getUseGyro(isForce: Boolean = false): Boolean {
@@ -66,6 +69,21 @@ object PreferencesManager {
         mExposureBracketMode = value
         mDefaultPreference.edit {
             putInt(KEY_EXPOSURE_BRACKET_MODE, value)
+        }
+    }
+
+    fun getUseFocusPeaking(isForce: Boolean = false): Boolean {
+        return if (isForce) {
+            mDefaultPreference.getBoolean(KEY_USE_FOCUS_PEAKING, false)
+        } else {
+            isFocusPeaking
+        }
+    }
+
+    fun putUseFocusPeaking(value: Boolean) {
+        isFocusPeaking = value
+        mDefaultPreference.edit {
+            putBoolean(KEY_USE_FOCUS_PEAKING, value)
         }
     }
 }

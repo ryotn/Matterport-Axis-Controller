@@ -18,6 +18,11 @@ struct SettingView: View {
                 }).onChange(of: model.isGyro) { _, _ in
                     model.changeGyro()
                 }
+                Toggle(isOn: $model.isFocusPeaking, label: {
+                    Text("フォーカスピーキング")
+                }).onChange(of: model.isFocusPeaking) { _, _ in
+                    model.changeFocusPeaking()
+                }
             }
         }
         .navigationBarTitle("Setting", displayMode: .large)

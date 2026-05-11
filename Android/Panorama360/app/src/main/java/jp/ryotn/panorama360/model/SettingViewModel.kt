@@ -13,18 +13,25 @@ class SettingViewModel(private val application: Application) : AndroidViewModel(
     private lateinit var mPreferencesManager: PreferencesManager
 
     val isGyro : MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isFocusPeaking : MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     fun init(isPreview: Boolean = false) {
         if (!isPreview) {
             mPreferencesManager = PreferencesManager
             mPreferencesManager.setUp(application.applicationContext)
             isGyro.value = mPreferencesManager.getUseGyro()
+            isFocusPeaking.value = mPreferencesManager.getUseFocusPeaking()
         }
     }
 
     fun putUseGyro(value: Boolean) {
         isGyro.value = value
         mPreferencesManager.putUseGyro(value)
+    }
+
+    fun putUseFocusPeaking(value: Boolean) {
+        isFocusPeaking.value = value
+        mPreferencesManager.putUseFocusPeaking(value)
     }
 
 }

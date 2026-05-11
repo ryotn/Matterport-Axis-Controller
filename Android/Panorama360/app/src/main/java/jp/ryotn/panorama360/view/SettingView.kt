@@ -25,10 +25,14 @@ import jp.ryotn.panorama360.view.ui.theme.Panorama360Theme
 @Composable
 fun Setting(model: SettingViewModel) {
     val isGyro: Boolean by model.isGyro.collectAsState()
+    val isFocusPeaking: Boolean by model.isFocusPeaking.collectAsState()
 
     Column {
         SwitchWithLabel(label = "雲台の回転停止検知に\nジャイロセンサーを利用する", state = isGyro) {
             model.putUseGyro(it)
+        }
+        SwitchWithLabel(label = "フォーカスピーキング", state = isFocusPeaking) {
+            model.putUseFocusPeaking(it)
         }
     }
 }

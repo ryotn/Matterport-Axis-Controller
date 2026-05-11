@@ -11,12 +11,18 @@ class SettingViewModel: ObservableObject {
     let preferencesManager = PreferencesManager.shared
 
     @Published var isGyro = false
+    @Published var isFocusPeaking = false
 
     init() {
         isGyro = preferencesManager.getUseGyro()
+        isFocusPeaking = preferencesManager.getUseFocusPeaking()
     }
 
     func changeGyro() {
         preferencesManager.setUseGyro(enable: isGyro)
+    }
+
+    func changeFocusPeaking() {
+        preferencesManager.setUseFocusPeaking(enable: isFocusPeaking)
     }
 }
