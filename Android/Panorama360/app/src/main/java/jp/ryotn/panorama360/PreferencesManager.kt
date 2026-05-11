@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
+import jp.ryotn.panorama360.camera.Camera360Manager
 
 object PreferencesManager {
     private const val TAG = "PreferencesManager"
@@ -19,7 +20,7 @@ object PreferencesManager {
     private var mSaveDirPath: String? = null
     private var mExposureBracketMode = 0
     private var isFocusPeaking = false
-    private var focusPeakingThreshold = 32f
+    private var focusPeakingThreshold = Camera360Manager.DEFAULT_EDGE_DETECTION_THRESHOLD.toFloat()
 
     fun setUp(context: Context){
         mDefaultPreference = PreferenceManager.getDefaultSharedPreferences(context)
@@ -92,7 +93,10 @@ object PreferencesManager {
 
     fun getFocusPeakingThreshold(isForce: Boolean = false): Float {
         return if (isForce) {
-            mDefaultPreference.getFloat(KEY_FOCUS_PEAKING_THRESHOLD, 32f)
+            mDefaultPreference.getFloat(
+                KEY_FOCUS_PEAKING_THRESHOLD,
+                Camera360Manager.DEFAULT_EDGE_DETECTION_THRESHOLD.toFloat()
+            )
         } else {
             focusPeakingThreshold
         }

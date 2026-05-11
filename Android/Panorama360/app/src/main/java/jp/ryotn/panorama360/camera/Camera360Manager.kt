@@ -54,7 +54,7 @@ class Camera360Manager(context: Context) {
     companion object {
         private const val TAG = "Camera360Manager"
         private const val IMAGE_BUFFER_SIZE = 7
-        private const val DEFAULT_EDGE_DETECTION_THRESHOLD = 32
+        const val DEFAULT_EDGE_DETECTION_THRESHOLD = 32
         private const val FOCUS_PEAKING_RED = 255
         private const val FOCUS_PEAKING_GREEN = 0
         private const val FOCUS_PEAKING_BLUE = 0
