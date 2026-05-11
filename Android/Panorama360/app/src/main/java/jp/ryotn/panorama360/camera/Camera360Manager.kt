@@ -59,7 +59,7 @@ class Camera360Manager(context: Context) {
         private const val FOCUS_PEAKING_GREEN = 0
         private const val FOCUS_PEAKING_BLUE = 0
         const val FOCUS_PEAKING_THRESHOLD_MIN = 8f
-        const val FOCUS_PEAKING_THRESHOLD_MAX = 96f
+        const val FOCUS_PEAKING_THRESHOLD_MAX = 1024f
         val EXPOSURE_BRACKET_LIST = arrayOf(
             intArrayOf(0),
             intArrayOf(0, -1, 1),

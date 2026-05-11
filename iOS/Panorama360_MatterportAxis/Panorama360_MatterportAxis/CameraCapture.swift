@@ -130,6 +130,11 @@ extension CameraCapture {
             mCaptureSession.addInput(newDeviceInput)
             mCaptureSession.commitConfiguration()
 
+            if let connection = mVideoDataOutput?.connection(with: .video),
+               connection.isVideoOrientationSupported {
+                connection.videoOrientation = .portrait
+            }
+
             setFocus(position: focus)
             mDelegate?.onCameraChangeComplete()
         } catch {
