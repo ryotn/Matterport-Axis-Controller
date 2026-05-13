@@ -308,7 +308,7 @@ fun Header(model: MainViewModel, navController: NavController) {
                 .weight(0.8f)
                 .padding(start = 24.dp),
                 value = focus,
-                valueRange = 0f..0.3f,
+                valueRange = 0f..MainViewModel.FOCUS_MAX_VALUE,
                 steps = 5,
                 onValueChange = {
                     model.setFocus(it)

@@ -35,6 +35,8 @@ import kotlin.math.round
 class MainViewModel(private val application: Application) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "MainViewModel"
+        const val FOCUS_MAX_VALUE = 0.3f
+        private const val FOCUS_ROUNDING_MULTIPLIER = 20.0f
     }
 
     private lateinit var mPreferencesManager: PreferencesManager
@@ -43,7 +45,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     private lateinit var mSoundPlayer: SoundPlayer
     private lateinit var mMotionManager: MotionManager
 
-    val mFocus: MutableStateFlow<Float> = MutableStateFlow(0.3f) //プレビュー用のダミー
+    val mFocus: MutableStateFlow<Float> = MutableStateFlow(FOCUS_MAX_VALUE) //プレビュー用のダミー
     val mFocalLength: MutableStateFlow<Float> = MutableStateFlow(32.0f) //プレビュー用のダミー
     var mExposureBracketModeList: MutableStateFlow<List<String>> = MutableStateFlow(listOf("")) //プレビュー用のダミー
     var mExposureBracketMode = 0
@@ -126,7 +128,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     }
 
     fun setFocus(f: Float) {
-        mFocus.value = round(f.coerceIn(0f, 0.3f) * 20.0f) / 20.0f
+        mFocus.value = round(f.coerceIn(0f, FOCUS_MAX_VALUE) * FOCUS_ROUNDING_MULTIPLIER) / FOCUS_ROUNDING_MULTIPLIER
         mCamera360Manager?.setFocusDistance(mFocus.value)
     }
 
