@@ -362,7 +362,12 @@ class Camera360Manager(context: Context) {
     }
 
     fun setFocusDistance(distance: Float) {
-        mFocusDistance = distance
+        val minimumFocusDistance = getMinimumFocusDistance()
+        mFocusDistance = if (minimumFocusDistance > 0f) {
+            distance.coerceIn(0f, 1f) * minimumFocusDistance
+        } else {
+            0f
+        }
         mPreviewRequestBuilder?.set(CaptureRequest.LENS_FOCUS_DISTANCE, mFocusDistance)
         mPreviewRequestBuilder?.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF)
         mPreviewRequestBuilder?.let {
