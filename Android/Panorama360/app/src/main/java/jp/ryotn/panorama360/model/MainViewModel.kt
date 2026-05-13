@@ -75,6 +75,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             mFocus.value = application.getString(R.string.default_focus_distance).toFloat()
             mPreferencesManager = PreferencesManager
             mPreferencesManager.setUp(application.applicationContext)
+            setFocus(mPreferencesManager.getFocusDistance())
             mMatterportAxisManager = MatterportAxisManager(context = application)
             mSoundPlayer = SoundPlayer(context = application)
             mMotionManager = MotionManager(context = application)
@@ -136,6 +137,9 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     fun setFocus(f: Float) {
         mFocus.value = round(f.coerceIn(0f, FOCUS_SLIDER_MAX) * FOCUS_ROUNDING_MULTIPLIER) / FOCUS_ROUNDING_MULTIPLIER
         mCamera360Manager?.setFocusDistance(mFocus.value)
+        if (::mPreferencesManager.isInitialized) {
+            mPreferencesManager.putFocusDistance(mFocus.value)
+        }
     }
 
     fun setFocusPeaking(enable: Boolean) {
