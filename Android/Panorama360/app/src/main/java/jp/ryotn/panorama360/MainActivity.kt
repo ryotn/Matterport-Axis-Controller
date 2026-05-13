@@ -12,6 +12,7 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -33,6 +34,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,6 +45,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -58,8 +61,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -102,6 +103,11 @@ class MainActivity : ComponentActivity() {
         model.init()
         settingModel.init()
         setContent {
+            val isFinishAlertDialog: Boolean by model.isFinishAlertDialog.collectAsState()
+            BackHandler(enabled = true) {
+                // Handle back press
+                model.isFinishAlertDialog.value = true
+            }
             Panorama360Theme {
                 KeepScreenOn()
                 Surface(
@@ -109,6 +115,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     GetPermission(model)
+                    if (isFinishAlertDialog) ShowAlertDialog(model)
                     Contents(model = model,
                         settingModel = settingModel)
                 }
@@ -546,6 +553,36 @@ fun ContentsPreview() {
     Panorama360Theme {
         Contents(model = model, settingModel = settingModel)
     }
+}
+
+@Composable
+fun ShowAlertDialog(model: MainViewModel) {
+    val context = LocalContext.current
+    AlertDialog(
+        onDismissRequest = {
+            // ダイアログ外のタップやシステム仕様によるキャンセル時
+            model.isFinishAlertDialog.value = false
+        },
+        title = { Text(text = "アプリの終了") },
+        text = { Text(text = "アプリを終了してもよろしいですか？") },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    model.isFinishAlertDialog.value = false
+                    context.findActivity()?.finishAffinity()
+                }
+            ) {
+                Text("OK")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = { model.isFinishAlertDialog.value = false } // 💡 キャンセルして戻る
+            ) {
+                Text("キャンセル")
+            }
+        }
+    )
 }
 
 private enum class Route(val displayName: String) {
