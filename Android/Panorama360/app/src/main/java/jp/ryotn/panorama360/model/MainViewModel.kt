@@ -35,7 +35,7 @@ import kotlin.math.round
 class MainViewModel(private val application: Application) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "MainViewModel"
-        /** UI slider upper bound. Passed directly to Camera360Manager.setFocusDistance (0..1 maps to 0..LENS_INFO_MINIMUM_FOCUS_DISTANCE). */
+        /** UI slider upper bound. Value is passed to Camera360Manager.setFocusDistance, which maps normalized input to LENS_INFO_MINIMUM_FOCUS_DISTANCE. */
         const val FOCUS_SLIDER_MAX = 0.3f
         /**
          * Inverse of the slider step size (step = 0.05, so multiplier = 1/0.05 = 20).
