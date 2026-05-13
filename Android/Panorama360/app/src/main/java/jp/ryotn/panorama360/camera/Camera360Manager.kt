@@ -54,12 +54,13 @@ class Camera360Manager(context: Context) {
     companion object {
         private const val TAG = "Camera360Manager"
         private const val IMAGE_BUFFER_SIZE = 7
-        const val DEFAULT_EDGE_DETECTION_THRESHOLD = 32
+        const val DEFAULT_EDGE_DETECTION_THRESHOLD = 400
         private const val FOCUS_PEAKING_RED = 255
         private const val FOCUS_PEAKING_GREEN = 0
         private const val FOCUS_PEAKING_BLUE = 0
-        const val FOCUS_PEAKING_THRESHOLD_MIN = 8f
-        const val FOCUS_PEAKING_THRESHOLD_MAX = 1024f
+        const val FOCUS_PEAKING_THRESHOLD_MIN = 0f
+        const val FOCUS_PEAKING_THRESHOLD_MAX = 150f
+        const val FOCUS_PEAKING_THRESHOLD_OFFSET = 400
         val EXPOSURE_BRACKET_LIST = arrayOf(
             intArrayOf(0),
             intArrayOf(0, -1, 1),
@@ -525,10 +526,7 @@ class Camera360Manager(context: Context) {
     }
 
     fun setFocusPeakingThreshold(value: Int) {
-        mEdgeDetectionThreshold = value.coerceIn(
-            FOCUS_PEAKING_THRESHOLD_MIN.toInt(),
-            FOCUS_PEAKING_THRESHOLD_MAX.toInt()
-        )
+        mEdgeDetectionThreshold = FOCUS_PEAKING_THRESHOLD_OFFSET + value
         mEdgeDetectionThresholdSq = mEdgeDetectionThreshold * mEdgeDetectionThreshold
     }
 
