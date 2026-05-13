@@ -35,8 +35,10 @@ import kotlin.math.round
 class MainViewModel(private val application: Application) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "MainViewModel"
-        const val FOCUS_MAX_VALUE = 0.3f
-        private const val FOCUS_ROUNDING_MULTIPLIER = 20.0f
+        /** UI slider upper bound. Passed directly to Camera360Manager.setFocusDistance (0..1 maps to 0..LENS_INFO_MINIMUM_FOCUS_DISTANCE). */
+        const val FOCUS_SLIDER_MAX = 0.3f
+        /** 1 / step size (0.05). Slider steps = (FOCUS_SLIDER_MAX * FOCUS_ROUNDING_MULTIPLIER).toInt() - 1 = 5. */
+        const val FOCUS_ROUNDING_MULTIPLIER = 20.0f
     }
 
     private lateinit var mPreferencesManager: PreferencesManager
@@ -45,7 +47,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     private lateinit var mSoundPlayer: SoundPlayer
     private lateinit var mMotionManager: MotionManager
 
-    val mFocus: MutableStateFlow<Float> = MutableStateFlow(FOCUS_MAX_VALUE) //プレビュー用のダミー
+    val mFocus: MutableStateFlow<Float> = MutableStateFlow(FOCUS_SLIDER_MAX) //プレビュー用のダミー
     val mFocalLength: MutableStateFlow<Float> = MutableStateFlow(32.0f) //プレビュー用のダミー
     var mExposureBracketModeList: MutableStateFlow<List<String>> = MutableStateFlow(listOf("")) //プレビュー用のダミー
     var mExposureBracketMode = 0
@@ -128,7 +130,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     }
 
     fun setFocus(f: Float) {
-        mFocus.value = round(f.coerceIn(0f, FOCUS_MAX_VALUE) * FOCUS_ROUNDING_MULTIPLIER) / FOCUS_ROUNDING_MULTIPLIER
+        mFocus.value = round(f.coerceIn(0f, FOCUS_SLIDER_MAX) * FOCUS_ROUNDING_MULTIPLIER) / FOCUS_ROUNDING_MULTIPLIER
         mCamera360Manager?.setFocusDistance(mFocus.value)
     }
 
