@@ -38,7 +38,7 @@ fun Setting(model: SettingViewModel) {
             model.putUseFocusPeaking(it)
         }
         Column(modifier = Modifier
-            .padding(horizontal = 24.dp)
+            .padding(horizontal = 32.dp)
             .fillMaxWidth()) {
             Text(text = "フォーカスピーキング しきい値: ${focusPeakingThreshold.toInt()}")
             Slider(

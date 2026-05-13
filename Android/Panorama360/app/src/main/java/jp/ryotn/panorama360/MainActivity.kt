@@ -313,7 +313,7 @@ fun Header(model: MainViewModel, navController: NavController) {
         Row(horizontalArrangement = Arrangement.SpaceBetween) {
             Slider(modifier = Modifier
                 .weight(0.8f)
-                .padding(start = 24.dp),
+                .padding(start = 32.dp),
                 value = focus,
                 valueRange = 0f..MainViewModel.FOCUS_SLIDER_MAX,
                 steps = (MainViewModel.FOCUS_SLIDER_MAX * MainViewModel.FOCUS_ROUNDING_MULTIPLIER).toInt() - 1,
@@ -322,7 +322,7 @@ fun Header(model: MainViewModel, navController: NavController) {
                 })
             Text(modifier = Modifier.padding(start = 14.dp,
                 top = 14.dp,
-                end = 24.dp),
+                end = 32.dp),
                 text = "%.2f".format(focus))
         }
     }
