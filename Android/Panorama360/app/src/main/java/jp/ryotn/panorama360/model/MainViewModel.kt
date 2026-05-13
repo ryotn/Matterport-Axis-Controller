@@ -43,7 +43,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     private lateinit var mSoundPlayer: SoundPlayer
     private lateinit var mMotionManager: MotionManager
 
-    val mFocus: MutableStateFlow<Float> = MutableStateFlow(0.4f) //プレビュー用のダミー
+    val mFocus: MutableStateFlow<Float> = MutableStateFlow(0.3f) //プレビュー用のダミー
     val mFocalLength: MutableStateFlow<Float> = MutableStateFlow(32.0f) //プレビュー用のダミー
     var mExposureBracketModeList: MutableStateFlow<List<String>> = MutableStateFlow(listOf("")) //プレビュー用のダミー
     var mExposureBracketMode = 0
@@ -126,7 +126,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     }
 
     fun setFocus(f: Float) {
-        mFocus.value = round(f * 10.0f) / 10.0f
+        mFocus.value = round(f.coerceIn(0f, 0.3f) * 20.0f) / 20.0f
         mCamera360Manager?.setFocusDistance(mFocus.value)
     }
 
