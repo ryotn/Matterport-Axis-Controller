@@ -40,7 +40,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         /**
          * Inverse of the slider step size (step = 0.05, so multiplier = 1/0.05 = 20).
          * Produces 7 snap positions (0, 0.05, …, 0.30).
-         * Slider parameter steps = (FOCUS_SLIDER_MAX * FOCUS_ROUNDING_MULTIPLIER).toInt() - 1 = 5.
+         * Slider `steps` parameter = 5 (endpoints excluded): (FOCUS_SLIDER_MAX * FOCUS_ROUNDING_MULTIPLIER).toInt() - 1.
          */
         const val FOCUS_ROUNDING_MULTIPLIER = 20.0f
     }

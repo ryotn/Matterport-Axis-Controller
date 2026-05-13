@@ -14,6 +14,7 @@ object PreferencesManager {
     private const val KEY_USE_FOCUS_PEAKING = "USE_FOCUS_PEAKING"
     private const val KEY_FOCUS_PEAKING_THRESHOLD = "FOCUS_PEAKING_THRESHOLD"
     private const val KEY_FOCUS_DISTANCE = "FOCUS_DISTANCE"
+    private const val DEFAULT_FOCUS_DISTANCE = 0.3f
 
     private lateinit var mDefaultPreference: SharedPreferences
 
@@ -22,7 +23,7 @@ object PreferencesManager {
     private var mExposureBracketMode = 0
     private var isFocusPeaking = false
     private var focusPeakingThreshold = Camera360Manager.DEFAULT_EDGE_DETECTION_THRESHOLD.toFloat()
-    private var focusDistance = 0.3f
+    private var focusDistance = DEFAULT_FOCUS_DISTANCE
 
     fun setUp(context: Context){
         mDefaultPreference = PreferenceManager.getDefaultSharedPreferences(context)
@@ -114,7 +115,7 @@ object PreferencesManager {
 
     fun getFocusDistance(isForce: Boolean = false): Float {
         return if (isForce) {
-            mDefaultPreference.getFloat(KEY_FOCUS_DISTANCE, 0.3f)
+            mDefaultPreference.getFloat(KEY_FOCUS_DISTANCE, DEFAULT_FOCUS_DISTANCE)
         } else {
             focusDistance
         }
