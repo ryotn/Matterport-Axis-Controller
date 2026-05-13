@@ -362,9 +362,10 @@ class Camera360Manager(context: Context) {
     }
 
     fun setFocusDistance(distance: Float) {
+        val normalizedDistance = distance.coerceIn(0f, 1f)
         val minimumFocusDistance = getMinimumFocusDistance()
         mFocusDistance = if (minimumFocusDistance > 0f) {
-            distance.coerceIn(0f, 1f) * minimumFocusDistance
+            normalizedDistance * minimumFocusDistance
         } else {
             0f
         }
