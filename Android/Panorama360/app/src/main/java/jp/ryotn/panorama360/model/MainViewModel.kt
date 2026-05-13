@@ -61,6 +61,8 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     val isPermission: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isUltraWide: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
+    val isFinishAlertDialog: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
     private var mSelectedCameraInfo: CameraInfoService.ExtendedCameraInfo? = null
 
     private var mViewFinder: TextureView? =null
