@@ -316,6 +316,9 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             // Apply saved focus peaking preference
             mCamera360Manager?.setFocusPeaking(mPreferencesManager.getUseFocusPeaking())
             mCamera360Manager?.setFocusPeakingThreshold(mPreferencesManager.getFocusPeakingThreshold().toInt())
+
+            // Re-apply current focus value so slider and camera stay in sync
+            mCamera360Manager?.setFocusDistance(mFocus.value)
         }
 
         override fun takePhotoSuccess() {

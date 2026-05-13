@@ -316,7 +316,7 @@ fun Header(model: MainViewModel, navController: NavController) {
             Text(modifier = Modifier.padding(start = 14.dp,
                 top = 14.dp,
                 end = 24.dp),
-                text = "$focus")
+                text = "%.2f".format(focus))
         }
     }
 }
