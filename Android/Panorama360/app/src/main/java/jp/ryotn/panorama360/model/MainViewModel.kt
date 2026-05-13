@@ -37,7 +37,11 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         private const val TAG = "MainViewModel"
         /** UI slider upper bound. Passed directly to Camera360Manager.setFocusDistance (0..1 maps to 0..LENS_INFO_MINIMUM_FOCUS_DISTANCE). */
         const val FOCUS_SLIDER_MAX = 0.3f
-        /** 1 / step size (0.05). Slider steps = (FOCUS_SLIDER_MAX * FOCUS_ROUNDING_MULTIPLIER).toInt() - 1 = 5. */
+        /**
+         * Inverse of the slider step size (step = 0.05, so multiplier = 1/0.05 = 20).
+         * Produces 6 snap positions (0, 0.05, …, 0.30) with 5 steps between them.
+         * Slider steps = (FOCUS_SLIDER_MAX * FOCUS_ROUNDING_MULTIPLIER).toInt() - 1 = 5.
+         */
         const val FOCUS_ROUNDING_MULTIPLIER = 20.0f
     }
 
