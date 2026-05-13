@@ -39,8 +39,8 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
         const val FOCUS_SLIDER_MAX = 0.3f
         /**
          * Inverse of the slider step size (step = 0.05, so multiplier = 1/0.05 = 20).
-         * Produces 6 snap positions (0, 0.05, …, 0.30) with 5 steps between them.
-         * Slider steps = (FOCUS_SLIDER_MAX * FOCUS_ROUNDING_MULTIPLIER).toInt() - 1 = 5.
+         * Produces 7 snap positions (0, 0.05, …, 0.30).
+         * Slider parameter steps = (FOCUS_SLIDER_MAX * FOCUS_ROUNDING_MULTIPLIER).toInt() - 1 = 5.
          */
         const val FOCUS_ROUNDING_MULTIPLIER = 20.0f
     }
@@ -72,7 +72,6 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
     fun init(isPreview: Boolean = false) {
         if (!isPreview) {
-            mFocus.value = application.getString(R.string.default_focus_distance).toFloat()
             mPreferencesManager = PreferencesManager
             mPreferencesManager.setUp(application.applicationContext)
             setFocus(mPreferencesManager.getFocusDistance())
