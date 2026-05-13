@@ -35,6 +35,14 @@ import kotlin.math.round
 class MainViewModel(private val application: Application) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "MainViewModel"
+        /** UI slider upper bound. Value is passed to Camera360Manager.setFocusDistance, which maps normalized input to LENS_INFO_MINIMUM_FOCUS_DISTANCE. */
+        const val FOCUS_SLIDER_MAX = 0.3f
+        /**
+         * Inverse of the slider step size (step = 0.05, so multiplier = 1/0.05 = 20).
+         * Produces 7 snap positions (0, 0.05, …, 0.30).
+         * Slider `steps` parameter = 5 (endpoints excluded): (FOCUS_SLIDER_MAX * FOCUS_ROUNDING_MULTIPLIER).toInt() - 1.
+         */
+        const val FOCUS_ROUNDING_MULTIPLIER = 20.0f
     }
 
     private lateinit var mPreferencesManager: PreferencesManager
@@ -43,7 +51,7 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     private lateinit var mSoundPlayer: SoundPlayer
     private lateinit var mMotionManager: MotionManager
 
-    val mFocus: MutableStateFlow<Float> = MutableStateFlow(0.4f) //プレビュー用のダミー
+    val mFocus: MutableStateFlow<Float> = MutableStateFlow(FOCUS_SLIDER_MAX) //プレビュー用のダミー
     val mFocalLength: MutableStateFlow<Float> = MutableStateFlow(32.0f) //プレビュー用のダミー
     var mExposureBracketModeList: MutableStateFlow<List<String>> = MutableStateFlow(listOf("")) //プレビュー用のダミー
     var mExposureBracketMode = 0
@@ -64,9 +72,9 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
 
     fun init(isPreview: Boolean = false) {
         if (!isPreview) {
-            mFocus.value = application.getString(R.string.default_focus_distance).toFloat()
             mPreferencesManager = PreferencesManager
             mPreferencesManager.setUp(application.applicationContext)
+            setFocus(mPreferencesManager.getFocusDistance())
             mMatterportAxisManager = MatterportAxisManager(context = application)
             mSoundPlayer = SoundPlayer(context = application)
             mMotionManager = MotionManager(context = application)
@@ -126,8 +134,11 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
     }
 
     fun setFocus(f: Float) {
-        mFocus.value = round(f * 10.0f) / 10.0f
+        mFocus.value = round(f.coerceIn(0f, FOCUS_SLIDER_MAX) * FOCUS_ROUNDING_MULTIPLIER) / FOCUS_ROUNDING_MULTIPLIER
         mCamera360Manager?.setFocusDistance(mFocus.value)
+        if (::mPreferencesManager.isInitialized) {
+            mPreferencesManager.putFocusDistance(mFocus.value)
+        }
     }
 
     fun setFocusPeaking(enable: Boolean) {
@@ -316,6 +327,9 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
             // Apply saved focus peaking preference
             mCamera360Manager?.setFocusPeaking(mPreferencesManager.getUseFocusPeaking())
             mCamera360Manager?.setFocusPeakingThreshold(mPreferencesManager.getFocusPeakingThreshold().toInt())
+
+            // Re-apply current focus value so slider and camera stay in sync
+            mCamera360Manager?.setFocusDistance(mFocus.value)
         }
 
         override fun takePhotoSuccess() {

@@ -6,7 +6,7 @@
     <string name="disconnecting" tools:ignore="TypographyEllipsis">Disconnecting...</string>
     <string name="angle">%1$d°</string>
     <string name="reset_angle">Reset Angle</string>
-    <string name="default_focus_distance">0.4</string>
+    <string name="default_focus_distance">0.3</string>
     <string name="create_dir">Create Dir</string>
     <string name="wide">Wide</string>
     <string name="ultra_wide">Ultra Wide</string>
